@@ -49,7 +49,7 @@ const goTentang = () => router.push("/about");
 const goKatalog = () => router.push("/katalog");
 const goAI = () => router.push("/ai");
 const goAppointment = () => router.push("/appointments");
-const goProfile = () => router.push("/profile");
+const goProfile = () => router.push("/viewprofile");
 </script>
 
 <style scoped>

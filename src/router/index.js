@@ -13,6 +13,7 @@ import MyAppointments from "../views/MyAppointments.vue";
 import MyAppointments2 from "../views/MyAppointments2.vue";
 import Profile from "../views/Profile.vue";
 import Profile2 from "../views/Profile2.vue";
+import ViewProfile from "../views/ViewProfile.vue";
 
 const routes = [
   {
@@ -76,6 +77,10 @@ const routes = [
   {
     path: "/profile2",
     component: Profile2,
+  },
+  {
+    path: "/viewprofile",
+    component: ViewProfile,
   },
 ];
 

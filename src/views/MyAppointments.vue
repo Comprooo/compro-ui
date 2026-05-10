@@ -8,7 +8,7 @@
           <img src="/src/assets/icon-carhitam.svg" />
         </div>
 
-        <div>
+        <div class="logo-text">
           <strong>AutoKatalog</strong>
           <p>Premium Car Collection</p>
         </div>
@@ -59,18 +59,26 @@
           <p>Confirmed</p>
           <h2 class="green">0</h2>
         </div>
+
+        <div class="card">
+          <p>Declined</p>
+          <h2>0</h2>
+        </div>
       </div>
 
       <!-- EMPTY -->
-      <div class="empty">
-        <h3>Daftar Appointments</h3>
-        <p class="desc">Jadwal pertemuan untuk cek kondisi mobil</p>
+      <div class="empty-wrapper">
+        <div class="empty-header">
+          <h3>Daftar Appointments</h3>
+          <p>Jadwal pertemuan untuk cek kondisi mobil</p>
+        </div>
 
         <div class="empty-box">
           <img src="/src/assets/apo-putih.svg" class="empty-icon" />
 
           <h2>Belum ada appointment</h2>
-          <p>Mulai jelajahi katalog mobil dan buat jadwal pertemuan</p>
+
+          <span> Mulai jelajahi katalog mobil dan buat jadwal pertemuan </span>
 
           <button @click="goKatalog">Lihat Katalog</button>
         </div>
@@ -89,181 +97,260 @@ const goHome = () => router.push("/");
 const goTentang = () => router.push("/about");
 const goKatalog = () => router.push("/katalog");
 const goAI = () => router.push("/ai");
-const goAppointment = () => router.push("/appointments"); // self
-const goProfile = () => router.push("/profile"); // self
+const goAppointment = () => router.push("/appointments");
+const goProfile = () => router.push("/profile");
 </script>
 
 <style scoped>
 /* PAGE */
 .page {
-  background: #f5f5f5;
   min-height: 100vh;
-  font-family: sans-serif;
+  background: #f5f5f5;
+  font-family: "Segoe UI", sans-serif;
 }
 
 /* NAVBAR */
 .navbar {
+  height: 90px;
+  background: white;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 40px;
-  background: white;
+
+  padding: 0 56px;
+
+  border-bottom: 1px solid #e8e8e8;
 }
 
 /* LOGO */
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
-/* LINGKARAN KUNING */
 .logo-circle {
-  width: 42px;
-  height: 42px;
-  background: #caa63a;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
+  background: #d4af37;
 
   display: flex;
+  align-items: center;
   justify-content: center;
-  align-items: center;
 
-  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
 }
 
-/* ICON MOBIL */
 .logo-circle img {
-  width: 22px;
-  height: 22px;
-}
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  width: 24px;
 }
 
-.logo-icon {
-  width: 32px;
+.logo-text strong {
+  font-size: 18px;
 }
 
-.logo p {
+.logo-text p {
   font-size: 12px;
   color: #caa63a;
-  margin: 0;
+  margin-top: 2px;
 }
 
 /* MENU */
 .menu {
   display: flex;
-  gap: 30px;
+  gap: 46px;
 }
 
 .menu a {
+  font-size: 18px;
   cursor: pointer;
+  transition: 0.2s;
 }
 
-/* ACTION */
+.menu a:hover {
+  color: #caa63a;
+}
+
+/* ACTIONS */
 .actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
+/* AI */
 .ai {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
 }
 
 .ai img {
-  width: 18px;
+  width: 22px;
 }
 
+.ai span {
+  font-size: 15px;
+}
+
+/* BTN */
 .appointment-btn {
-  background: #caa63a;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
+  height: 40px;
+  padding: 0 18px;
+
+  border-radius: 10px;
+  border: 1px solid #d4af37;
+
+  background: white;
+  cursor: pointer;
+
+  font-size: 15px;
+}
+
+/* PROFILE */
+.profile {
+  width: 54px;
+  height: 54px;
+
+  border-radius: 50%;
+  overflow: hidden;
+
   cursor: pointer;
 }
 
 .profile img {
-  width: 35px;
-  border-radius: 50%;
-  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 /* CONTAINER */
 .container {
-  padding: 40px;
-  max-width: 900px;
-  margin: auto;
+  width: 760px;
+  margin: 34px auto;
+}
+
+/* TITLE */
+.container h1 {
+  font-size: 48px;
+  font-weight: 700;
 }
 
 .subtitle {
-  color: gray;
-  margin-top: 5px;
+  color: #7d7d7d;
+  margin-top: 8px;
+  font-size: 16px;
 }
 
 /* STATS */
 .stats {
   display: flex;
-  gap: 20px;
-  margin-top: 30px;
+  gap: 16px;
+  margin-top: 34px;
 }
 
 .card {
-  flex: 1;
-  border: 1px solid #e2c46f;
-  border-radius: 12px;
-  padding: 20px;
+  width: 170px;
+  height: 170px;
+
+  border: 1px solid #efdba1;
+  border-radius: 18px;
+
   background: white;
+
+  padding: 24px;
+}
+
+.card p {
+  color: #6e6e6e;
+  line-height: 1.4;
+  font-size: 15px;
 }
 
 .card h2 {
-  color: #caa63a;
+  margin-top: 48px;
+  font-size: 34px;
+  color: #d0a92d;
 }
 
 .green {
-  color: #22c55e;
+  color: #16c14c !important;
 }
 
-/* EMPTY */
-.empty {
-  margin-top: 40px;
-}
+/* EMPTY WRAPPER */
+.empty-wrapper {
+  margin-top: 30px;
 
-.empty-box {
-  margin-top: 20px;
-  border: 1px solid #e2c46f;
-  border-radius: 12px;
-  padding: 40px;
-  text-align: center;
+  border: 1px solid #f0e0b0;
+  border-radius: 18px;
+
   background: white;
+
+  min-height: 400px;
+
+  padding: 26px;
 }
 
+/* HEADER */
+.empty-header h3 {
+  font-size: 18px;
+}
+
+.empty-header p {
+  margin-top: 6px;
+  color: #777;
+}
+
+/* EMPTY BOX */
+.empty-box {
+  height: 300px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ICON */
 .empty-icon {
-  width: 60px;
-  opacity: 0.5;
+  width: 74px;
+  opacity: 0.35;
 }
 
+/* TEXT */
 .empty-box h2 {
+  margin-top: 18px;
+  font-size: 20px;
+}
+
+.empty-box span {
   margin-top: 10px;
+  color: #808080;
+  font-size: 15px;
 }
 
-.empty-box p {
-  color: gray;
-}
-
+/* BUTTON */
 .empty-box button {
-  margin-top: 15px;
-  background: #caa63a;
+  margin-top: 22px;
+
+  width: 116px;
+  height: 40px;
+
   border: none;
-  color: white;
-  padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 10px;
+
+  background: #d4af37;
+  color: black;
+
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.empty-box button:hover {
+  opacity: 0.9;
 }
 </style>

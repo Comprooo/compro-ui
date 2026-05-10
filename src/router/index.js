@@ -14,6 +14,8 @@ import MyAppointments2 from "../views/MyAppointments2.vue";
 import Profile from "../views/Profile.vue";
 import Profile2 from "../views/Profile2.vue";
 import ViewProfile from "../views/ViewProfile.vue";
+import Reschedule from "../views/Reschedule.vue";
+import SuccessReschedule from "../views/SuccessReschedule.vue";
 
 const routes = [
   {
@@ -81,6 +83,14 @@ const routes = [
   {
     path: "/viewprofile",
     component: ViewProfile,
+  },
+  {
+    path: "/reschedule",
+    component: Reschedule,
+  },
+  {
+    path: "/successreschedule",
+    component: SuccessReschedule,
   },
 ];
 

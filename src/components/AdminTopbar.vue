@@ -27,7 +27,7 @@ defineProps({
 const router = useRouter();
 
 const goNotif = () => router.push("/admin/notif");
-const goProfile = () => router.push("/admin/profile");
+const goProfile = () => router.push("/admin/profileadmin");
 </script>
 
 <style scoped>

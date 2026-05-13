@@ -150,15 +150,15 @@ const selectedShow = ref("4");
 
 /* ROUTER */
 const goTambahJadwal = () => {
-  router.push("/admin/tambah-jadwal");
+  router.push("/admin/tambahjadwal");
 };
 
 const goEdit = () => {
-  router.push("/admin/edit-jadwal");
+  router.push("/admin/editjadwal");
 };
 
 const goTrash = () => {
-  router.push("/admin/delete-jadwal");
+  router.push("/admin/deletejadwal");
 };
 </script>
 

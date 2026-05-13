@@ -28,6 +28,10 @@ import SuccessAddKatalog from "../views/admin/SuccessAddKatalog.vue";
 import BlankNotif from "../views/admin/BlankNotif.vue";
 import FilledNotif from "../views/admin/FilledNotif.vue";
 import DetailApo from "../views/admin/DetailApo.vue";
+import ProfileAdmin from "../views/admin/profileAdmin.vue";
+import EditProfileAdmin from "../views/admin/editProfileAdmin.vue";
+import EditJadwal from "../views/admin/EditJadwal.vue";
+import TambahJadwal from "../views/admin/TambahJadwal.vue";
 
 const routes = [
   {
@@ -116,6 +120,10 @@ const routes = [
   { path: "/admin/blanknotif", component: BlankNotif },
   { path: "/admin/notif", component: FilledNotif },
   { path: "/admin/detailapo", component: DetailApo },
+  { path: "/admin/profileadmin", component: ProfileAdmin },
+  { path: "/admin/editprofile", component: EditProfileAdmin },
+  { path: "/admin/editjadwal", component: EditJadwal },
+  { path: "/admin/tambahjadwal", component: TambahJadwal },
 ];
 
 const router = createRouter({

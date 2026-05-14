@@ -16,6 +16,22 @@ import Profile2 from "../views/Profile2.vue";
 import ViewProfile from "../views/ViewProfile.vue";
 import Reschedule from "../views/Reschedule.vue";
 import SuccessReschedule from "../views/SuccessReschedule.vue";
+import Dashboard from "../views/admin/Dashboard.vue";
+import Katalog from "../views/admin/Katalog.vue";
+import ApointmentsAdmin from "../views/admin/ApointmentsAdmin.vue";
+import JadwalAdmin from "../views/admin/JadwalAdmin.vue";
+import Statistik from "../views/admin/Statistik.vue";
+import DetailProduk from "../views/admin/DetailProduk.vue";
+import EditKatalog from "../views/admin/EditKatalog.vue";
+import TambahKatalog from "../views/admin/TambahKatalog.vue";
+import SuccessAddKatalog from "../views/admin/SuccessAddKatalog.vue";
+import BlankNotif from "../views/admin/BlankNotif.vue";
+import FilledNotif from "../views/admin/FilledNotif.vue";
+import DetailApo from "../views/admin/DetailApo.vue";
+import ProfileAdmin from "../views/admin/profileAdmin.vue";
+import EditProfileAdmin from "../views/admin/editProfileAdmin.vue";
+import EditJadwal from "../views/admin/EditJadwal.vue";
+import TambahJadwal from "../views/admin/TambahJadwal.vue";
 
 const routes = [
   {
@@ -96,6 +112,22 @@ const routes = [
     name: "successreschedule",
     component: SuccessReschedule,
   },
+  { path: "/admin/dashboard", component: Dashboard },
+  { path: "/admin/katalog", component: Katalog },
+  { path: "/admin/appointment", component: ApointmentsAdmin },
+  { path: "/admin/jadwal", component: JadwalAdmin },
+  { path: "/admin/statistik", component: Statistik },
+  { path: "/admin/detail", component: DetailProduk },
+  { path: "/admin/editkatalog", component: EditKatalog },
+  { path: "/admin/addkatalog", component: TambahKatalog },
+  { path: "/admin/successkatalog", component: SuccessAddKatalog },
+  { path: "/admin/blanknotif", component: BlankNotif },
+  { path: "/admin/notif", component: FilledNotif },
+  { path: "/admin/detailapo", component: DetailApo },
+  { path: "/admin/profileadmin", component: ProfileAdmin },
+  { path: "/admin/editprofile", component: EditProfileAdmin },
+  { path: "/admin/editjadwal", component: EditJadwal },
+  { path: "/admin/tambahjadwal", component: TambahJadwal },
 ];
 
 const router = createRouter({

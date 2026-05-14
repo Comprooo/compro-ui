@@ -16,10 +16,10 @@
         <form @submit.prevent="handleRegister" class="form">
           <!-- Nama -->
           <div class="form-group">
-            <label>Nama Lengkap</label>
+            <label>Username</label>
             <div class="input-wrapper">
               <img src="/src/assets/profile-icon.svg" />
-              <input v-model="name" placeholder="Nama lengkap" />
+              <input v-model="name" placeholder="Username" />
             </div>
           </div>
 
@@ -28,7 +28,7 @@
             <label>Email</label>
             <div class="input-wrapper">
               <img src="/src/assets/email-icon.svg" class="icon" />
-              <input placeholder="nama@email.com" />
+              <input v-model="email" placeholder="nama@email.com" />
             </div>
           </div>
 
@@ -78,6 +78,8 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import axios from "axios";
+import Swal from "sweetalert2";
 
 const router = useRouter();
 
@@ -87,7 +89,7 @@ const phone = ref("");
 const password = ref("");
 const confirmPassword = ref("");
 
-const handleRegister = () => {
+const handleRegister = async () => {
   if (
     !name.value ||
     !email.value ||
@@ -95,17 +97,50 @@ const handleRegister = () => {
     !password.value ||
     !confirmPassword.value
   ) {
-    alert("Semua field wajib diisi!");
+  Swal.fire({
+    icon: "warning",
+    title: "Field Belum Lengkap",
+    text: "Semua field wajib diisi!",
+    confirmButtonColor: "#caa63a",
+  });
     return;
   }
 
   if (password.value !== confirmPassword.value) {
-    alert("Password tidak sama!");
+    Swal.fire({
+      icon: "warning",
+      title: "Password Tidak Sama",
+      text: "Password dan konfirmasi password tidak cocok",
+      confirmButtonColor: "#caa63a",
+    });
     return;
   }
 
-  alert("Register berhasil! 🎉");
-  router.push("/home");
+  await fetchRegister();
+};
+
+const fetchRegister = async () => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/v1/auth/register', {
+      username: name.value,
+      email: email.value,
+      phone: phone.value,
+      password: password.value,
+      password_confirm: confirmPassword.value
+    });
+    console.log(response.data);
+    Swal.fire({
+      icon: "success",
+      title: "Register Berhasil 🎉",
+      text: "Akun Anda telah berhasil dibuat",
+      confirmButtonColor: "#caa63a",
+    });
+    setTimeout(() => {
+      router.push("/");
+    }, 1800);
+  } catch (error) {
+    alert("Gagal register: " +  (error.response?.data?.message || error.message));
+  }
 };
 
 const goLogin = () => {

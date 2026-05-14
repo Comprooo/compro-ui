@@ -1,42 +1,7 @@
 <template>
   <div class="page">
     <!-- NAVBAR -->
-    <nav class="navbar">
-      <!-- LOGO -->
-      <div class="logo">
-        <div class="logo-circle">
-          <img src="/src/assets/icon-carhitam.svg" />
-        </div>
-
-        <div class="logo-text">
-          <strong>AutoKatalog</strong>
-          <p>Premium Car Collection</p>
-        </div>
-      </div>
-
-      <!-- MENU -->
-      <div class="menu">
-        <a @click="goHome">Home</a>
-        <a @click="goTentang">Tentang kami</a>
-        <a @click="goKatalog">Katalog</a>
-      </div>
-
-      <!-- ACTION -->
-      <div class="actions">
-        <div class="ai" @click="goAI">
-          <img src="/src/assets/ai-asistant.svg" />
-          <span>AI Assistant</span>
-        </div>
-
-        <button class="appointment-btn" @click="goAppointment">
-          My Appointments
-        </button>
-
-        <div class="profile" @click="goProfile">
-          <img src="/src/assets/logo-profile.png" />
-        </div>
-      </div>
-    </nav>
+    <Navbar />
 
     <!-- CONTENT -->
     <div class="container">
@@ -46,28 +11,31 @@
       <!-- STATS -->
       <div class="stats">
         <div class="card">
-          <p>Total Appointments</p>
-          <h2>0</h2>
+          <p>Total</p>
+          <h2>{{ summary.total }}</h2>
         </div>
 
         <div class="card">
           <p>Pending</p>
-          <h2>0</h2>
+          <h2 class="grey">{{summary.pending }}</h2>
         </div>
 
         <div class="card">
           <p>Confirmed</p>
-          <h2 class="green">0</h2>
+          <h2 class="green">{{ summary.completed }}</h2>
         </div>
 
         <div class="card">
           <p>Declined</p>
-          <h2>0</h2>
+          <h2 class="red">{{ summary.cancelled }}</h2>
         </div>
       </div>
 
       <!-- EMPTY -->
-      <div class="empty-wrapper">
+      <div
+        v-if="appointments.length === 0"
+        class="empty-wrapper"
+      >
         <div class="empty-header">
           <h3>Daftar Appointments</h3>
           <p>Jadwal pertemuan untuk cek kondisi mobil</p>
@@ -78,9 +46,179 @@
 
           <h2>Belum ada appointment</h2>
 
-          <span> Mulai jelajahi katalog mobil dan buat jadwal pertemuan </span>
+          <span>
+            Mulai jelajahi katalog mobil dan buat jadwal pertemuan
+          </span>
 
-          <button @click="goKatalog">Lihat Katalog</button>
+          <button @click="goKatalog">
+            Lihat Katalog
+          </button>
+        </div>
+      </div>
+
+      <!-- APPOINTMENTS -->
+      <div
+        v-else
+        class="appointment-wrapper"
+      >
+        <div class="header">
+          <h3>Daftar Appointments</h3>
+          <p>Jadwal pertemuan untuk cek kondisi mobil</p>
+        </div>
+
+        <div
+          v-for="item in appointments"
+          :key="item.id"
+          class="appointment-card"
+        >
+          <!-- IMAGE -->
+          <img
+            :src="item.car.images?.[0]"
+            class="car-image"
+          />
+
+          <!-- CONTENT -->
+          <div class="appointment-content">
+
+            <!-- TOP -->
+            <div class="top-row">
+              <div>
+                <h2>
+                  {{ item.car.specifications?.year }}
+                  {{ item.car.brand }}
+                  {{ item.car.model }}
+                  {{ item.car.specifications?.transmission }}
+                </h2>
+
+                <h3>
+                  Rp {{ formatPrice(item.car.price) }}
+                </h3>
+              </div>
+
+              <span
+                class="status"
+                :class="item.status"
+              >
+                {{ item.status }}
+              </span>
+            </div>
+
+            <!-- INFO -->
+            <div class="info-grid">
+
+              <div class="info-item">
+                📅
+                {{ item.slot?.date ? formatDate(item.slot.date) : "-" }}
+              </div>
+
+              <div class="info-item">
+                🕘
+                {{ item.slot?.time || "-" }}
+              </div>
+
+              <div class="info-item">
+                📞
+                {{ item.phone || "-" }}
+              </div>
+
+              <div class="info-item">
+                ✉️
+                {{ item.email || "-" }}
+              </div>
+
+            </div>
+
+            <div class="info-location">
+              <div class="info-item">
+                📍
+                {{ item.slot?.location?.location_name }} -
+                {{ item.slot?.location?.address }}
+                <a
+                  v-if="item.slot?.location?.map_link"
+                  :href="item.slot.location.map_link"
+                  target="_blank"
+                  class="map-link"
+                >
+                  (Lihat di Maps)
+                </a>
+              </div>
+            </div>
+
+            <!-- NOTES -->
+            <div
+              v-if="item.notes"
+              class="message-box"
+            >
+              <strong>Pesan:</strong>
+
+              <p>{{ item.notes }}</p>
+            </div>
+
+            <!-- DECLINED ALERT -->
+            <div
+              v-if="item.status === 'cancelled'"
+              class="declined-alert"
+            >
+              <strong>
+                ⚠ Appointment Ditolak
+              </strong>
+
+              <p>
+                Jadwal tidak tersedia,
+                mohon pilih waktu lain
+              </p>
+            </div>
+
+            <!-- BUTTONS -->
+            <div class="button-group">
+
+              <!-- DETAIL -->
+              <button
+                class="detail-btn"
+                @click="goDetail(item.car.car_id)"
+              >
+                Lihat Detail Mobil
+              </button>
+
+              <!-- PENDING -->
+              <template v-if="item.status === 'pending'">
+
+                <button
+                  class="cancel-btn"
+                  @click="cancelAppointment(item.id)"
+                >
+                  ✕ Cancel Appointment
+                </button>
+
+              </template>
+
+              <!-- DECLINED -->
+              <template v-if="item.status === 'cancelled'">
+
+                <button
+                  class="reschedule-btn"
+                  @click="goReschedule(item.id)"
+                >
+                  ↻ Reschedule
+                </button>
+
+              </template>
+
+              <!-- CONFIRMED -->
+              <template v-if="item.status === 'completed'">
+
+                <a
+                  href="https://wa.me/628123456789"
+                  target="_blank"
+                  class="wa-btn"
+                >
+                  💬 Hubungi via WhatsApp
+                </a>
+
+              </template>
+
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -88,17 +226,129 @@
 </template>
 
 <script setup>
+import Navbar from "@/components/Navbar.vue";
 import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import axios from "axios";
+import Swal from "sweetalert2";
 
 const router = useRouter();
+const loading = ref(false);
+const appointments = ref([]);
+const summary = ref({
+  total: 0,
+  pending: 0,
+  completed: 0,
+  cancelled: 0,
+});
 
-/* ROUTING */
-const goHome = () => router.push("/");
-const goTentang = () => router.push("/about");
+/* FETCH APPOINTMENTS */
+const fetchAppointments = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      "http://localhost:8000/api/v1/schedules/me",
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    console.log(res.data);
+
+    summary.value = res.data.data.summary;
+    appointments.value = res.data.data.appointments;
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchAppointments();
+});
+
+/* FORMAT */
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+/* ROUTE */
 const goKatalog = () => router.push("/katalog");
-const goAI = () => router.push("/ai");
-const goAppointment = () => router.push("/appointments");
-const goProfile = () => router.push("/profile");
+const goDetail = (id) => {
+  router.push(`/detail/${id}`);
+};
+
+const goReschedule = (id) => {
+  router.push(`/reschedule/${id}`);
+};
+
+const cancelAppointment = async (id) => {
+  try {
+    const result = await Swal.fire({
+      title: "Batalkan Appointment?",
+      text: "Appointment akan diubah menjadi cancelled",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#f44336",
+      cancelButtonColor: "#9e9e9e",
+      confirmButtonText: "Ya, batalkan",
+      cancelButtonText: "Batal",
+    });
+
+    if (!result.isConfirmed) return;
+
+    loading.value = true;
+
+    const res = await axios.patch(
+      `http://localhost:8000/api/v1/schedules/${id}/cancel`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    console.log(res.data);
+
+    Swal.fire({
+      icon: "success",
+      title: "Appointment Dibatalkan",
+      text: "Status berhasil diubah menjadi cancelled",
+      confirmButtonColor: "#caa63a",
+    });
+
+    // refresh data
+    await fetchAppointments();
+
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Gagal Cancel Appointment",
+      text: err.response?.data?.message || "Terjadi kesalahan",
+      confirmButtonColor: "#caa63a",
+    });
+
+  } finally {
+    loading.value = false;
+  }
+};
+
 </script>
 
 <style scoped>
@@ -107,124 +357,6 @@ const goProfile = () => router.push("/profile");
   min-height: 100vh;
   background: #f5f5f5;
   font-family: "Segoe UI", sans-serif;
-}
-
-/* NAVBAR */
-.navbar {
-  height: 90px;
-  background: white;
-
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  padding: 0 56px;
-
-  border-bottom: 1px solid #e8e8e8;
-}
-
-/* LOGO */
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.logo-circle {
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  background: #d4af37;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.25);
-}
-
-.logo-circle img {
-  width: 24px;
-}
-
-.logo-text strong {
-  font-size: 18px;
-}
-
-.logo-text p {
-  font-size: 12px;
-  color: #caa63a;
-  margin-top: 2px;
-}
-
-/* MENU */
-.menu {
-  display: flex;
-  gap: 46px;
-}
-
-.menu a {
-  font-size: 18px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.menu a:hover {
-  color: #caa63a;
-}
-
-/* ACTIONS */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* AI */
-.ai {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.ai img {
-  width: 22px;
-}
-
-.ai span {
-  font-size: 15px;
-}
-
-/* BTN */
-.appointment-btn {
-  height: 40px;
-  padding: 0 18px;
-
-  border-radius: 10px;
-  border: 1px solid #d4af37;
-
-  background: white;
-  cursor: pointer;
-
-  font-size: 15px;
-}
-
-/* PROFILE */
-.profile {
-  width: 54px;
-  height: 54px;
-
-  border-radius: 50%;
-  overflow: hidden;
-
-  cursor: pointer;
-}
-
-.profile img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 /* CONTAINER */
@@ -253,14 +385,11 @@ const goProfile = () => router.push("/profile");
 }
 
 .card {
-  width: 170px;
+  width: 200px;
   height: 170px;
-
   border: 1px solid #efdba1;
   border-radius: 18px;
-
   background: white;
-
   padding: 24px;
 }
 
@@ -276,21 +405,24 @@ const goProfile = () => router.push("/profile");
   color: #d0a92d;
 }
 
+.grey{
+  color: #3b3b39 !important;
+}
 .green {
   color: #16c14c !important;
+}
+
+.red {
+  color: #f44336 !important;
 }
 
 /* EMPTY WRAPPER */
 .empty-wrapper {
   margin-top: 30px;
-
   border: 1px solid #f0e0b0;
   border-radius: 18px;
-
   background: white;
-
   min-height: 400px;
-
   padding: 26px;
 }
 
@@ -335,16 +467,12 @@ const goProfile = () => router.push("/profile");
 /* BUTTON */
 .empty-box button {
   margin-top: 22px;
-
   width: 116px;
   height: 40px;
-
   border: none;
   border-radius: 10px;
-
   background: #d4af37;
   color: black;
-
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
@@ -352,5 +480,228 @@ const goProfile = () => router.push("/profile");
 
 .empty-box button:hover {
   opacity: 0.9;
+}
+
+/* APPOINTMENT WRAPPER */
+.appointment-wrapper {
+  margin-top: 24px;
+  border: 1px solid #f0dfb2;
+  border-radius: 18px;
+  background: white;
+  padding: 20px;
+}
+
+.header h3 {
+  font-size: 20px;
+}
+
+.header p {
+  color: #777;
+  margin-top: 5px;
+}
+
+/* CARD */
+.appointment-card {
+  margin-top: 24px;
+  border: 1px solid #e5c86d;
+  border-radius: 18px;
+  padding: 18px;
+  display: flex;
+  gap: 18px;
+  transition: 0.2s;
+}
+
+.appointment-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* IMAGE */
+.car-image {
+  width: 220px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+/* INFO */
+.appointment-content {
+  flex: 1;
+}
+
+/* TOP */
+.top-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.top-row h2 {
+  font-size: 22px;
+}
+
+.top-row h3 {
+  margin-top: 6px;
+  color: #d0a92d;
+  font-size: 18px;
+}
+
+/* STATUS */
+.status {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status.pending {
+  background: #edece9;
+  color: #3b3b39;
+}
+
+.status.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status.cancelled {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.info-grid {
+  margin-top: 16px;
+
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.info-location {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.5;
+  margin-top: 15px;
+  padding: 12px;
+  border: 1px solid #e0cfa4;
+  border-radius: 10px;
+  background-color: #f5f5f5;
+}
+
+.map-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #caa63a;
+  text-decoration: none;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.map-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.message-box {
+  margin-top: 14px;
+  background: #f5f5f5;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.message-box p {
+  margin-top: 16px;
+  color: #565353;
+}
+
+.declined-alert {
+  margin-top: 14px;
+  background: #f8d7da;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.declined-alert strong {
+  color: #721c24;
+}
+
+.declined-alert p {
+  color: red;
+}
+
+/* BUTTONS */
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.detail-btn {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  background: #d4af37;
+  border-radius: 10px;
+  cursor: pointer;
+  border-color: #3b3b39;
+
+}
+
+.detail-btn:hover {
+  background: #caa63a;
+  color: white;
+  border: none;
+}
+
+.reschedule-btn {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  background: #d4af37;
+  border-radius: 10px;
+  cursor: pointer;
+  border-color: #3b3b39;
+
+}
+
+.reschedule-btn:hover {
+  background: #caa63a;
+  color: white;
+}
+
+.cancel-btn {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #ddd;
+  background: rgb(247, 59, 59);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.cancel-btn:hover {
+  background: #f44336;
+  color: white;
+  border: none;
+}
+
+.wa-btn {
+  height: 38px;
+  padding: 0 18px;
+  background: #00b83e;
+  color: black;
+  text-decoration: none;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  border-color: #3b3b39;
+}
+
+.wa-btn:hover {
+  background: #00a231;
+  color: white;
+  border: none;
 }
 </style>

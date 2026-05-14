@@ -27,6 +27,7 @@ const routes = [
     path: "/home",
     name: "HomeAfterLogin",
     component: HomePage2,
+    meta: { requiresAuth: true },
   },
   {
     path: "/login",
@@ -52,16 +53,19 @@ const routes = [
     component: AiPage,
   },
   {
-    path: "/detail",
+    path: "/detail/:id",
     name: "DetailCar",
     component: DetailCar,
   },
   {
-    path: "/jadwal",
+    path: "/jadwal/:id",
+    name: "jadwal",
     component: JadwalPage,
+    meta: { requiresAuth: true },
   },
   {
-    path: "/success",
+    path: "/success/:id",
+    name: "success",
     component: SuccessJadwal,
   },
   {
@@ -75,21 +79,21 @@ const routes = [
   {
     path: "/profile",
     component: Profile,
-  },
-  {
-    path: "/profile2",
-    component: Profile2,
+    meta: { requiresAuth: true },
   },
   {
     path: "/viewprofile",
     component: ViewProfile,
+    meta: { requiresAuth: true },
   },
   {
-    path: "/reschedule",
+    path: "/reschedule/:id",
+    name: "reschedule",
     component: Reschedule,
   },
   {
-    path: "/successreschedule",
+    path: "/successreschedule/:id",
+    name: "successreschedule",
     component: SuccessReschedule,
   },
 ];
@@ -97,6 +101,21 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+});
+
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem("token");
+
+  if (to.meta.requiresAuth && !token) {
+    next({
+      path: "/login",
+      query: {
+        auth: "required"
+      }
+    });
+  } else {
+    next();
+  }
 });
 
 export default router;

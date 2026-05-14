@@ -8,17 +8,17 @@
 
     <!-- CARD MOBIL -->
     <div class="car-card">
-      <img src="/src/assets/avanza.png" />
+      <img :src="data.car?.images?.[0]" />
 
       <div class="car-info">
-        <h2>Toyota Avanza</h2>
-        <h3>Rp 250.000.000</h3>
+        <h2>{{data.car?.specifications?.year}} {{ data.car?.brand }} {{ data.car?.model }} {{ data.car?.specifications?.transmission }}</h2>
+        <h3>Rp {{ formatPrice(data.car?.price) }}</h3>
 
         <ul>
-          <li>Tahun: 2022</li>
-          <li>Kilometer: 20.000 km</li>
-          <li>Transmisi: automatic</li>
-          <li>Bahan Bakar: bensin</li>
+          <li>Tahun: {{ data.car?.specifications?.year }}</li>
+          <li>Kilometer: {{ data.car?.specifications?.mileage }}</li>
+          <li>Transmisi: {{ data.car?.specifications?.transmission }}</li>
+          <li>Bahan Bakar: {{ data.car?.specifications?.fuel }}</li>
         </ul>
       </div>
     </div>
@@ -39,10 +39,10 @@
 
       <!-- DETAIL -->
       <div class="detail-box">
-        <p><strong>Tanggal:</strong> Jumat, 10 April 2026</p>
-        <p><strong>Waktu:</strong> 10:00 WIB</p>
-        <p><strong>Nama:</strong> nanana</p>
-        <p><strong>No. HP:</strong> 0812345678</p>
+        <p><strong>Tanggal:</strong> {{ data?.slot?.date }}</p>
+        <p><strong>Waktu:</strong> {{ data?.slot?.time }}</p>
+        <p><strong>Email:</strong> {{ data?.email }}</p>
+        <p><strong>No. HP:</strong> {{ data?.phone }}</p>
       </div>
 
       <!-- BUTTON -->
@@ -56,13 +56,49 @@
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from "vue-router";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 
-const router = useRouter()
+const router = useRouter();
+const route = useRoute();
+const data = ref({});
+const loading = ref(false);
+
+const fetchSchedule = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      `http://localhost:8000/api/v1/schedules/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    data.value = res.data.data;
+
+    console.log(data.value);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchSchedule();
+});
 
 const goKatalog = () => {
   router.push('/katalog')
 }
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
 </script>
 
 <style scoped>
@@ -106,8 +142,10 @@ const goKatalog = () => {
 }
 
 .car-info ul {
-  margin-top: 10px;
+  margin-top: 16px;
   padding-left: 18px;
+  color: #666;
+  line-height: 2;
 }
 
 /* SUCCESS */

@@ -19,13 +19,13 @@
 
       <div class="form">
         <label>Nama Lengkap</label>
-        <input type="text" placeholder="Nama lengkap" />
+        <input type="text" placeholder="Nama lengkap" v-model="profile.username" />
 
         <label>Email</label>
-        <input type="email" placeholder="nama@email.com" />
+        <input type="email" placeholder="nama@email.com" v-model="profile.email" />
 
         <label>No. Handphone</label>
-        <input type="text" placeholder="08xx xxxx xxxx" />
+        <input type="text" placeholder="08xx xxxx xxxx" v-model="profile.phone" />
       </div>
 
       <div class="actions">
@@ -52,31 +52,195 @@
           </div>
         </div>
 
-        <span class="change" @click="goChange">Ganti</span>
+        <span class="change" @click="togglePassword">
+          {{ showPasswordForm ? "Tutup" : "Ganti" }}
+        </span>
+      </div>
+          <div v-if="showPasswordForm" class="password-form">
+      <label>Password Saat Ini</label>
+      <div class="input-icon">
+        <img src="/src/assets/icon-lock.svg" />
+        <input type="password" placeholder="Masukkan Password Saat Ini" v-model="password.current" /> 
+      </div>
+      
+
+      <label>Password Baru</label>
+      <div class="input-icon">
+        <img src="/src/assets/icon-lock.svg" />
+        <input type="password" placeholder="Masukkan Password Baru (min. 6 karakter)" v-model="password.new" />
+      </div>
+
+      <label>Konfirmasi Password Baru</label>
+      <div class="input-icon">
+        <img src="/src/assets/icon-lock.svg" />
+        <input type="password" placeholder="Konfirmasi Password Baru" v-model="password.confirm" />
+      </div>
+
+      <div class="actions">
+        <button class="btn-outline" @click="goCancel">
+          Batal
+        </button>
+
+        <button class="btn-primary" @click="goChange">
+          🔒 Ganti Password
+        </button>
       </div>
     </div>
+    </div>
+
+
   </div>
 </template>
 
 <script setup>
 import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+
+const profile = ref({
+  username: "",
+  email: "",
+  phone: ""
+});
+
+const password = ref({
+  current: "",
+  new: "",
+  confirm: ""
+});
+
+const fetchProfile = async () => {
+  try {
+    const token = localStorage.getItem("token"); // pastikan ada
+
+    const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const result = await response.json();
+    console.log(result);
+
+    if (result.status === "success") {
+      profile.value = result.data;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const updateProfile = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        username: profile.value.username,
+        email: profile.value.email,
+        phone: profile.value.phone,
+      }),
+    });
+
+    const result = await response.json();
+    console.log(result);
+
+    if (response.ok) {
+      alert("Profile berhasil diupdate");
+      router.push("/viewprofile");
+    } else {
+      alert(result.message || "Gagal update profile");
+    }
+  } catch (error) {
+    console.error(error);
+    alert("Terjadi kesalahan");
+  }
+};
+
+const updatePassword = async () => {
+  try {
+    const token = localStorage.getItem("token");
+
+    // VALIDASI FRONTEND
+    if (!password.value.current || !password.value.new || !password.value.confirm) {
+      alert("Semua field password wajib diisi");
+      return;
+    }
+
+    if (password.value.new !== password.value.confirm) {
+      alert("Konfirmasi password tidak sama");
+      return;
+    }
+
+    const response = await fetch("http://localhost:8000/api/v1/auth/change-password", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        old_password: password.value.current,
+        new_password: password.value.new,
+        confirm_password: password.value.confirm,
+      }),
+    });
+
+    const result = await response.json();
+    console.log(result);
+
+    if (response.ok) {
+      alert("Password berhasil diubah");
+
+      // reset form
+      password.value = {
+        current: "",
+        new: "",
+        confirm: ""
+      };
+      router.push("/viewprofile");
+      showPasswordForm.value = false;
+
+    } else {
+      alert(result.message || "Gagal ganti password");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Terjadi kesalahan");
+  }
+};
 
 const router = useRouter();
 
 const goSave = () => {
-  router.push("/home"); // redirect bebas (sementara ke home)
+  updateProfile();
 };
 
 const goCancel = () => {
-  router.push("/home"); // bisa ke profile / home
+  router.push("/viewprofile"); // bisa ke profile / home
 };
 
 const goBack = () => {
   router.back();
 };
 const goChange = () => {
-  router.push("/profile2");
+  updatePassword();
 };
+
+const showPasswordForm = ref(false);
+
+const togglePassword = () => {
+  showPasswordForm.value = !showPasswordForm.value;
+};
+
+onMounted(() => {
+    fetchProfile();
+  });
 </script>
 
 <style scoped>
@@ -156,6 +320,26 @@ const goChange = () => {
   width: 22px;
 }
 
+.input-icon {
+  display: flex;
+  align-items: center;
+  background: #eee;
+  border-radius: 10px;
+  padding: 10px;
+  gap: 10px;
+}
+
+.input-icon img {
+  width: 18px;
+}
+
+.input-icon input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+}
+
 /* FORM */
 .form {
   display: flex;
@@ -207,5 +391,19 @@ const goChange = () => {
   color: red;
   cursor: pointer;
   font-size: 14px;
+}
+
+.password-form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.password-form input {
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #eee;
 }
 </style>

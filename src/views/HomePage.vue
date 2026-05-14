@@ -25,123 +25,48 @@
 
       <div class="list-header">
         <h3>Temukan <span>Mobil</span> Impian Anda</h3>
-        <button class="lihat-btn">Lihat Semua</button>
+        <button class="lihat-btn" @click="goKatalog">Lihat Semua</button>
       </div>
 
-      <div class="grid">
-        <!-- CARD 1 -->
-        <div class="card">
-          <div class="image">
-            <img src="/src/assets/camry.png" />
-            <span class="badge green">Tersedia</span>
-          </div>
-          <div class="card-body">
-            <h4>Toyota Camry</h4>
-            <p class="price">Rp 550.000.000</p>
-            <div class="info">
-              <span>📅 2022</span>
-              <span>🚗 15.000 km</span>
-              <span>⚙ Automatic</span>
-              <span>⛽ Bensin</span>
-            </div>
-            <button class="detail-btn">Lihat Detail</button>
-          </div>
-        </div>
+            <!-- LOADING -->
+      <div v-if="loading" class="empty-state">
+        <p>Loading data mobil...</p>
+      </div>
 
-        <!-- CARD 2 -->
-        <div class="card">
+      <!-- DATA ADA -->
+      <div v-else-if="cars.length > 0" class="grid">
+        <div class="card" v-for="car in cars" :key="car.car_id">
           <div class="image">
-            <img src="/src/assets/hrv.png" />
-            <span class="badge green">Tersedia</span>
+            <img :src="car.thumbnail_url || '/default-car.png'" />
+            <span
+              class="badge"
+              :class="car.status === 'Tersedia' ? 'green' : 'red'"
+            >
+              {{ car.status}}
+            </span>
           </div>
-          <div class="card-body">
-            <h4>Honda CR-V</h4>
-            <p class="price">Rp 650.000.000</p>
-            <div class="info">
-              <span>📅 2023</span>
-              <span>🚗 8.000 km</span>
-              <span>⚙ Automatic</span>
-              <span>⛽ Bensin</span>
-            </div>
-            <button class="detail-btn">Lihat Detail</button>
-          </div>
-        </div>
 
-        <!-- CARD 3 -->
-        <div class="card">
-          <div class="image">
-            <img src="/src/assets/mazdacx5.png" />
-            <span class="badge dark">Terjual</span>
-          </div>
           <div class="card-body">
-            <h4>Mazda CX-5</h4>
-            <p class="price">Rp 480.000.000</p>
-            <div class="info">
-              <span>📅 2021</span>
-              <span>🚗 25.000 km</span>
-              <span>⚙ Automatic</span>
-              <span>⛽ Bensin</span>
-            </div>
-            <button class="detail-btn outline">Lihat Detail</button>
-          </div>
-        </div>
+            <h4>{{ car.year}} {{ car.brand }} {{ car.model }} {{ car.transmission }}</h4>
 
-        <!-- CARD 4 -->
-        <div class="card">
-          <div class="image">
-            <img src="/src/assets/avanza.png" />
-            <span class="badge green">Tersedia</span>
-          </div>
-          <div class="card-body">
-            <h4>Toyota Avanza</h4>
-            <p class="price">Rp 250.000.000</p>
-            <div class="info">
-              <span>📅 2022</span>
-              <span>🚗 20.000 km</span>
-              <span>⚙ Automatic</span>
-              <span>⛽ Bensin</span>
-            </div>
-            <button class="detail-btn">Lihat Detail</button>
-          </div>
-        </div>
+            <p class="price">
+              Rp {{ formatPrice(car.price) }}
+            </p>
 
-        <!-- CARD 5 -->
-        <div class="card">
-          <div class="image">
-            <img src="/src/assets/civic.png" />
-            <span class="badge green">Tersedia</span>
-          </div>
-          <div class="card-body">
-            <h4>Honda Civic Type R</h4>
-            <p class="price">Rp 950.000.000</p>
-            <div class="info">
-              <span>📅 2023</span>
-              <span>🚗 3.000 km</span>
-              <span>⚙ Manual</span>
-              <span>⛽ Bensin</span>
-            </div>
-            <button class="detail-btn">Lihat Detail</button>
+            <button
+              class="detail-btn"
+              @click="goDetail(car.car_id)"
+            >
+              Lihat Detail
+            </button>
           </div>
         </div>
+      </div>
 
-        <!-- CARD 6 -->
-        <div class="card">
-          <div class="image">
-            <img src="/src/assets/nissanxtrail.png" />
-            <span class="badge green">Tersedia</span>
-          </div>
-          <div class="card-body">
-            <h4>Nissan X-Trail</h4>
-            <p class="price">Rp 580.000.000</p>
-            <div class="info">
-              <span>📅 2023</span>
-              <span>🚗 12.000 km</span>
-              <span>⚙ Automatic</span>
-              <span>⛽ Bensin</span>
-            </div>
-            <button class="detail-btn">Lihat Detail</button>
-          </div>
-        </div>
+      <!-- DATA KOSONG -->
+      <div v-else class="empty-state">
+        <p>🚫 Stok mobil saat ini kosong</p>
+        <small>Silakan cek kembali nanti atau ubah filter pencarian</small>
       </div>
     </section>
   </div>
@@ -149,6 +74,55 @@
 
 <script setup>
 import Navbar from "@/components/NavbarLanding.vue";
+import router from "@/router";
+import { ref, onMounted } from "vue";
+import axios from "axios";
+
+const cars = ref([]);
+const loading = ref(false);
+
+const fetchCars = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get("http://localhost:8000/api/v1/cars", {
+      params: {
+        page: 1,
+        limit: 9,
+      },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // kalau butuh token
+      },
+    });
+
+    cars.value = res.data.data;
+    console.log(cars.value);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchCars();
+});
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
+
+const formatNumber = (num) => {
+  return new Intl.NumberFormat("id-ID").format(num);
+};
+
+const goKatalog = () => {
+  router.push('/katalog'); 
+};
+
+const goDetail = (id) => {
+  router.push(`/detail/${id}`);
+};
 </script>
 
 <style scoped>
@@ -156,6 +130,8 @@ import Navbar from "@/components/NavbarLanding.vue";
 .page {
   font-family: "Segoe UI", sans-serif;
   background: #f3f3f3;
+  min-height: 100vh;
+
 }
 
 /* HERO */
@@ -201,6 +177,7 @@ import Navbar from "@/components/NavbarLanding.vue";
   border: none;
   padding: 6px 14px;
   border-radius: 6px;
+  cursor: pointer;
 }
 
 /* GRID */
@@ -208,31 +185,38 @@ import Navbar from "@/components/NavbarLanding.vue";
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 25px;
+  padding: 40px;
+  max-width: 1200px;
+  margin: auto;
 }
 
 /* CARD */
 .card {
   background: white;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
-  transition: 0.3s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: 0.25s;;
 }
 
 .card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
 
-/* IMAGE */
 .image {
   position: relative;
-  height: 170px;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: #eee;
 }
 
 .image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 /* BADGE */
@@ -250,8 +234,8 @@ import Navbar from "@/components/NavbarLanding.vue";
   background: green;
 }
 
-.dark {
-  background: black;
+.red {
+  background: red;
 }
 
 /* BODY */
@@ -259,18 +243,19 @@ import Navbar from "@/components/NavbarLanding.vue";
   padding: 16px;
 }
 
-.price {
-  color: #caa63a;
-  font-weight: bold;
-  margin: 5px 0;
+.card-body h4 { 
+  font-size: 18px;
+  margin: 0;
+  min-height: 80px;
+  overflow: hidden;
 }
 
-.info {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  font-size: 12px;
-  margin-bottom: 10px;
+.price {
+  font-size: 20px;
+  color: #caa63a;
+  font-weight: bold;
+  margin: 0;
+  margin-bottom: 6px;
 }
 
 /* BUTTON */
@@ -280,12 +265,22 @@ import Navbar from "@/components/NavbarLanding.vue";
   border: none;
   padding: 10px;
   border-radius: 8px;
-  color: white;
+  cursor: pointer;
 }
 
 .detail-btn.outline {
-  background: transparent;
   border: 1px solid #ccc;
   color: black;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #777;
 }
 </style>

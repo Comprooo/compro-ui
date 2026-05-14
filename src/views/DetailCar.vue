@@ -1,27 +1,27 @@
 <template>
   <div class="page">
     <!-- NAVBAR -->
-    <nav class="navbar">
-      <div class="logo">
-        <img :src="logoIcon" class="icon" />
-        <div>
-          <strong>AutoKatalog</strong>
-          <p>Premium Car Collection</p>
-        </div>
-      </div>
-    </nav>
-
+    <NavbarUser v-if="isLogin" />
+    <NavbarLanding v-else />
+    
+    <!-- LOADING -->
+    <div v-if="loading" class="loading">
+      Loading...
+    </div>
+    
     <!-- CONTENT -->
-    <div class="container">
+    <div v-else class="container">
       <!-- LEFT -->
       <div class="left">
         <div class="image-wrapper">
-          <img :src="carImage" />
-          <span class="badge">Tersedia</span>
+          <img :src="car.images?.[0] || carImage" />
+          <span class="badge" :class="car.status === 'Tersedia' ? 'green' : 'red'">
+            {{ car.status }}
+          </span>
         </div>
 
-        <h1>Toyota Avanza</h1>
-        <h2>Rp 250.000.000</h2>
+        <h1>{{ car.brand }} {{ car.model }}</h1>
+        <h2>Rp {{ formatPrice(car.price) }}</h2>
       </div>
 
       <!-- RIGHT -->
@@ -30,32 +30,32 @@
         <div class="spec-box">
           <div class="spec-item">
             <span>Tahun</span>
-            <strong>2022</strong>
+            <strong>{{car.specifications?.year}}</strong>
           </div>
 
           <div class="spec-item">
             <span>Kilometer</span>
-            <strong>20.000 km</strong>
+            <strong>{{car.specifications?.mileage}}</strong>
           </div>
 
           <div class="spec-item">
             <span>Transmisi</span>
-            <strong>Automatic</strong>
+            <strong>{{car.specifications?.transmission}}</strong>
           </div>
 
           <div class="spec-item">
             <span>Bahan Bakar</span>
-            <strong>Bensin</strong>
+            <strong>{{car.specifications?.fuel}}</strong>
           </div>
 
           <div class="spec-item">
             <span>Warna</span>
-            <strong>Grey</strong>
+            <strong>{{ car.specifications?.color }}</strong>
           </div>
 
           <div class="spec-item">
             <span>Tipe</span>
-            <strong>MPV</strong>
+            <strong>{{ car.specifications?.type }}</strong>
           </div>
         </div>
 
@@ -63,8 +63,7 @@
         <div class="desc">
           <h3>Deskripsi</h3>
           <p>
-            Toyota Avanza 2022 cocok untuk keluarga, irit BBM, service record
-            lengkap
+            {{ car.description }}
           </p>
         </div>
 
@@ -73,29 +72,13 @@
           <h3>Fitur</h3>
 
           <div class="fitur-grid">
-            <div class="fitur-item">
-              <img src="/src/assets/icon-check.svg" class="check" />
-              <span>7 Seats</span>
-            </div>
-
-            <div class="fitur-item">
+            <div
+              class="fitur-item"
+              v-for="(feature, index) in car.features"
+              :key="index"
+            >
               <img :src="checkIcon" class="check" />
-              <span>Dual Airbags</span>
-            </div>
-
-            <div class="fitur-item">
-              <img :src="checkIcon" class="check" />
-              <span>ABS</span>
-            </div>
-
-            <div class="fitur-item">
-              <img :src="checkIcon" class="check" />
-              <span>Touchscreen Audio</span>
-            </div>
-
-            <div class="fitur-item">
-              <img :src="checkIcon" class="check" />
-              <span>Rear Camera</span>
+              <span>{{ feature }}</span>
             </div>
           </div>
         </div>
@@ -113,17 +96,52 @@
 </template>
 
 <script setup>
-import { useRouter } from "vue-router";
-
-// IMPORT ASSETS (WAJIB BIAR GAK ERROR)
+import NavbarUser from "@/components/Navbar.vue";
+import NavbarLanding from "@/components/NavbarLanding.vue";
 import checkIcon from "../assets/icon-check.svg";
 import logoIcon from "../assets/logo-car.svg";
 import carImage from "../assets/avanza.png";
+import { useRouter, useRoute } from "vue-router";
+import { ref, onMounted } from "vue";
+import axios from "axios";
 
+const car = ref({});
+const loading = ref(false);
 const router = useRouter();
+const route = useRoute();
+const isLogin = ref(false);
+
+onMounted(() => {
+  isLogin.value = !!localStorage.getItem("token");
+  fetchCarDetail();
+});
+
+const fetchCarDetail = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      `http://localhost:8000/api/v1/cars/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+    car.value = res.data.data;
+    console.log(car.value);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
 
 const handleBooking = () => {
-  router.push("/jadwal");
+  router.push(`/jadwal/${car.value.car_id}`);
 };
 </script>
 
@@ -180,13 +198,19 @@ const handleBooking = () => {
 
 .badge {
   position: absolute;
-  top: 15px;
-  right: 15px;
-  background: #22c55e;
+  top: 10px;
+  right: 10px;
+  padding: 4px 10px;
+  border-radius: 12px;
   color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 12px;
+}
+
+.green {
+  background: green;
+}
+
+.red {
+  background: red;
 }
 
 .left h1 {

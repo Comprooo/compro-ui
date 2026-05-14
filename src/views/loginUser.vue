@@ -8,14 +8,10 @@
         <form @submit.prevent="handleLogin" class="form">
           <!-- Email -->
           <div class="form-group">
-            <label>Email</label>
+            <label>Username</label>
             <div class="input-wrapper">
-              <img src="/src/assets/email-icon.svg" class="icon" />
-              <input
-                type="email"
-                v-model="email"
-                placeholder="nama@email.com"
-              />
+              <img src="/src/assets/profile-icon.svg" />
+              <input v-model="name" placeholder="Username" />
             </div>
           </div>
 
@@ -64,31 +60,82 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import Swal from "sweetalert2";
+import axios from "axios";
 
 const router = useRouter();
+const route = useRoute();
 
-const email = ref("");
+const name = ref("");
 const password = ref("");
 const showPassword = ref(false);
 
-const handleLogin = () => {
-  if (email.value && password.value) {
-    alert("Login berhasil!");
-    console.log(email.value, password.value);
-    router.push("/home");
-  } else {
-    alert("Isi semua field!");
+onMounted(() => {
+  if (route.query.auth === "required") {
+    Swal.fire({
+      icon: "warning",
+      title: "Login Diperlukan",
+      text: "Silakan login terlebih dahulu",
+      confirmButtonColor: "#caa63a"
+    });
   }
+});
+
+const handleLogin = async () => {
+if (!name.value || !password.value) {
+  Swal.fire({
+    icon: "warning",
+    title: "Field Belum Lengkap",
+    text: "Username dan password wajib diisi",
+    confirmButtonColor: "#caa63a",
+  });
+  return;
+}
+  await fetchLogin();
 };
 
 const forgotPassword = () => {
-  alert("Fitur belum tersedia");
-};
+Swal.fire({
+    icon: "warning",
+    title: "Fitur Belum Tersedia",
+    confirmButtonColor: "#caa63a",
+  });};
 
 const handleRegister = () => {
   router.push("/register");
+};
+
+const fetchLogin = async () => {
+  try {
+    const response = await axios.post('http://localhost:8000/api/v1/auth/login', {
+      username: name.value,
+      password: password.value
+    });
+    console.log(response.data);
+    const token = response.data.data.access_token;
+    localStorage.setItem("token", token);
+    Swal.fire({
+      icon: "success",
+      title: "Login Berhasil 🎉",
+      text: "Selamat datang kembali",
+      confirmButtonColor: "#caa63a",
+      timer: 1800,
+      showConfirmButton: false,
+    });
+
+    setTimeout(() => {
+      router.push("/home");
+    }, 1800);
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Login Gagal",
+      text: "Periksa username dan password Anda.",
+      confirmButtonColor: "#caa63a",
+    });
+  }
 };
 </script>
 

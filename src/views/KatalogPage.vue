@@ -1,7 +1,8 @@
 <template>
   <div class="page">
     <!-- NAVBAR (REPLACED) -->
-    <Navbar />
+    <NavbarUser v-if="isLogin" />
+    <NavbarLanding v-else />
 
     <!-- HERO -->
     <section class="hero">
@@ -9,164 +10,265 @@
       <p>Temukan mobil impian Anda dari katalog lengkap kami</p>
 
       <div class="stats">
-        <span><i class="dot yellow"></i> 6 Total</span>
-        <span><i class="dot green"></i> 5 Tersedia</span>
-        <span><i class="dot red"></i> 1 Terjual</span>
+        <span><img :src="yellowDot" alt="Yellow Dot" /> <b>{{ formatNumber(totalCars) }}</b>  Total</span>
+        <span><img :src="greenDot" alt="Green Dot" /> <b>{{ formatNumber(availableCars) }}</b>  Tersedia</span>
+        <span><img :src="redDot" alt="Red Dot" /> <b>{{ formatNumber(soldCars) }}</b> Terjual</span>
       </div>
     </section>
 
     <!-- FILTER -->
     <section class="filter">
       <div class="filter-left">
-        <select>
-          <option>Brand</option>
-        </select>
-        <select>
-          <option>Tahun</option>
-        </select>
-        <select>
-          <option>Transmisi</option>
-        </select>
+        <v-select
+          v-model="selectedBrand"
+          :options="brands"
+          placeholder="Semua Brand"
+          @update:modelValue="filterCars"
+        />
+
+        <v-select
+          v-model="selectedYear"
+          :options="years"
+          placeholder="Semua Tahun"
+          @update:modelValue="filterCars"
+        />
+         
+        <v-select
+          v-model="selectedTransmission"
+          :options="transmissions"
+          placeholder="Semua Transmisi"
+          @update:modelValue="filterCars"
+        />
       </div>
 
       <div class="filter-right">
         <span>Tampilan:</span>
-        <button class="active">Grid</button>
-        <button>List</button>
+        <button :class="{ active: viewMode === 'grid' }"@click="viewMode = 'grid'">
+          Grid
+        </button>
+
+        <button :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'">
+          List
+        </button>
       </div>
     </section>
 
     <!-- GRID -->
-    <section class="grid">
-      <!-- CARD 1 -->
-      <div class="card">
-        <div class="image">
-          <img src="/src/assets/camry.png" />
-          <span class="badge green">Tersedia</span>
-        </div>
-        <div class="body">
-          <h4>Toyota Camry</h4>
-          <p class="price">Rp 550.000.000</p>
-          <div class="info">
-            <span>2022</span>
-            <span>15.000 km</span>
-            <span>Automatic</span>
-            <span>Bensin</span>
-          </div>
-          <button @click="goDetail">Lihat Detail</button>
-        </div>
+    <section :class="viewMode === 'grid' ? 'grid' : 'list-view'">
+
+      <!-- LOADING -->
+      <div v-if="loading" class="empty-state">
+        <p>Loading data mobil...</p>
       </div>
 
-      <!-- CARD 2 -->
-      <div class="card">
-        <div class="image">
-          <img src="/src/assets/hrv.png" />
-          <span class="badge green">Tersedia</span>
-        </div>
-        <div class="body">
-          <h4>Honda CR-V</h4>
-          <p class="price">Rp 650.000.000</p>
-          <div class="info">
-            <span>2023</span>
-            <span>8.000 km</span>
-            <span>Automatic</span>
-            <span>Bensin</span>
+      <!-- DATA ADA -->
+      <template v-else-if="cars.length > 0">
+        <div class="card" v-for="car in paginatedCars" :key="car.car_id">
+          <div class="image">
+            <img :src="car.thumbnail_url || '/default-car.png'" />
+            <span class="badge" :class="car.status === 'Tersedia' ? 'green' : 'red'">
+              {{ car.status }}
+            </span>
           </div>
-          <button @click="goDetail">Lihat Detail</button>
-        </div>
-      </div>
 
-      <!-- CARD 3 -->
-      <div class="card">
-        <div class="image">
-          <img src="/src/assets/mazdacx5.png" />
-          <span class="badge dark">Terjual</span>
-        </div>
-        <div class="body">
-          <h4>Mazda CX-5</h4>
-          <p class="price">Rp 480.000.000</p>
-          <div class="info">
-            <span>2021</span>
-            <span>25.000 km</span>
-            <span>Automatic</span>
-            <span>Bensin</span>
+          <div class="body">
+            <h4>{{ car.year }} {{ car.brand }} {{ car.model }} {{ car.transmission }}</h4>
+            <p class="price">
+              Rp {{ formatPrice(car.price) }}
+            </p>
+            <button @click="goDetail(car.car_id)">
+              Lihat Detail
+            </button>
           </div>
-          <button @click="goDetail">Lihat Detail</button>
         </div>
-      </div>
+      </template>
 
-      <!-- CARD 4 -->
-      <div class="card">
-        <div class="image">
-          <img src="/src/assets/avanza.png" />
-          <span class="badge green">Tersedia</span>
-        </div>
-        <div class="body">
-          <h4>Toyota Avanza</h4>
-          <p class="price">Rp 250.000.000</p>
-          <div class="info">
-            <span>2022</span>
-            <span>20.000 km</span>
-            <span>Automatic</span>
-            <span>Bensin</span>
-          </div>
-          <button @click="goDetail">Lihat Detail</button>
-        </div>
-      </div>
-
-      <!-- CARD 5 -->
-      <div class="card">
-        <div class="image">
-          <img src="/src/assets/civic.png" />
-          <span class="badge green">Tersedia</span>
-        </div>
-        <div class="body">
-          <h4>Honda Civic Type R</h4>
-          <p class="price">Rp 950.000.000</p>
-          <div class="info">
-            <span>2023</span>
-            <span>3.000 km</span>
-            <span>Manual</span>
-            <span>Bensin</span>
-          </div>
-          <button @click="goDetail">Lihat Detail</button>
-        </div>
-      </div>
-
-      <!-- CARD 6 -->
-      <div class="card">
-        <div class="image">
-          <img src="/src/assets/nissanxtrail.png" />
-          <span class="badge green">Tersedia</span>
-        </div>
-        <div class="body">
-          <h4>Nissan X-Trail</h4>
-          <p class="price">Rp 580.000.000</p>
-          <div class="info">
-            <span>2023</span>
-            <span>12.000 km</span>
-            <span>Automatic</span>
-            <span>Bensin</span>
-          </div>
-          <button @click="goDetail">Lihat Detail</button>
-        </div>
+      <!-- DATA KOSONG -->
+      <div v-else class="empty-state">
+        <p>🚫 Stok mobil kosong</p>
+        <small>Silakan cek kembali nanti atau ubah filter pencarian</small>
       </div>
     </section>
+
+    <!-- PAGINATION -->
+    <div
+      v-if="cars.length > 0"
+      class="pagination"
+      >
+      <button
+        :disabled="currentPage === 1"
+        @click="currentPage--"
+      >
+        ← Prev
+      </button>
+
+      <button
+        v-for="page in totalPages"
+        :key="page"
+        :class="{ active: currentPage === page }"
+        @click="currentPage = page"
+      >
+        {{ page }}
+      </button>
+
+      <button
+        :disabled="currentPage === totalPages"
+        @click="currentPage++"
+      >
+        Next →
+      </button>
+    </div>
   </div>
 </template>
 
 <script setup>
-import Navbar from "@/components/Navbar.vue";
+import NavbarLanding from "@/components/NavbarLanding.vue";
+import NavbarUser from "@/components/Navbar.vue";
+import yellowDot from "@/assets/dot-yellow.svg";
+import greenDot from "@/assets/dot-green.svg";
+import redDot from "@/assets/dot-red.svg";
 import { useRouter } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import axios from "axios";
+import vSelect from "vue-select";
+import "vue-select/dist/vue-select.css";
 
 const router = useRouter();
-const goDetail = () => {
-  router.push("/detail");
-};
-const goHome = () => router.push("/");
-const goAbout = () => router.push("/about");
-</script>
+const isLogin = ref(false);
+const allCars = ref([]);
+const cars = ref([]);
+const loading = ref(false);
+const viewMode = ref("grid");
+const currentPage = ref(1);
+const itemsPerPage = 16;
+const selectedBrand = ref(null);
+const selectedYear = ref(null);
+const selectedTransmission = ref(null);
+const brands = ref([]);
+const years = ref([]);
+const transmissions = ref([]);
 
+const goDetail = (id) => {
+  router.push(`/detail/${id}`);
+};
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
+
+const formatNumber = (num) => {
+  return new Intl.NumberFormat("id-ID").format(num);
+};
+
+const totalCars = computed(() => {
+  return allCars.value.length;
+});
+
+const availableCars = computed(() => {
+  return allCars.value.filter(
+    car => car.status === "Tersedia"
+  ).length;
+});
+
+const soldCars = computed(() => {
+  return allCars.value.filter(
+    car => car.status === "Terjual"
+  ).length;
+});
+
+onMounted(() => {
+  isLogin.value = !!localStorage.getItem("token");
+  fetchCars();
+});
+
+const fetchCars = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      "http://localhost:8000/api/v1/cars",
+      {
+        params: {
+          page: 1,
+          limit: 100, 
+        },
+
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem(
+            "token"
+          )}`,
+        },
+      }
+    );
+
+    allCars.value = res.data.data;
+    cars.value = res.data.data;
+
+    brands.value = [
+      ...new Set(allCars.value.map(car => car.brand)),
+    ];
+
+    years.value = [
+      ...new Set(
+        allCars.value.map(
+          car => car.year
+        )
+      ),
+    ];
+
+    transmissions.value = [
+      ...new Set(
+        allCars.value.map(
+          car => car.transmission
+        )
+      ),
+    ];
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const filterCars = () => {
+  currentPage.value = 1;
+  cars.value = allCars.value.filter((car) => {
+    const matchBrand =
+      !selectedBrand.value ||
+      car.brand === selectedBrand.value;
+
+    const matchYear =
+      !selectedYear.value ||
+      car.year ==
+        selectedYear.value;
+
+    const matchTransmission =
+      !selectedTransmission.value ||
+      car.transmission ===
+        selectedTransmission.value;
+
+    return (
+      matchBrand &&
+      matchYear &&
+      matchTransmission
+    );
+  });
+};
+
+const totalPages = computed(() => {
+  return Math.ceil(cars.value.length / itemsPerPage);
+});
+
+const paginatedCars = computed(() => {
+  const start =
+    (currentPage.value - 1) * itemsPerPage;
+
+  const end = start + itemsPerPage;
+
+  return cars.value.slice(start, end);
+});
+
+</script>
 <style scoped>
 /* TIDAK ADA STYLE YANG DIUBAH */
 
@@ -174,6 +276,8 @@ const goAbout = () => router.push("/about");
 .page {
   font-family: "Segoe UI", sans-serif;
   background: #f3f3f3;
+  min-height: 100vh;
+
 }
 
 /* HERO */
@@ -194,6 +298,25 @@ const goAbout = () => router.push("/about");
   gap: 20px;
 }
 
+.stats span {
+  color : gray
+}
+
+.stats span b{
+  color: black;
+}
+
+.dot-yellow {
+  color: #D4AF37;
+}
+
+.dot-green {
+  color: green;
+}
+
+.dot-red {
+  color: red;
+}
 /* FILTER */
 .filter {
   display: flex;
@@ -204,13 +327,14 @@ const goAbout = () => router.push("/about");
   margin: auto;
 }
 
-.filter-left select {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #ddd;
-  background: white;
-  font-size: 14px;
-  cursor: pointer;
+.filter-left {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.filter-left :deep(.v-select) {
+  min-width: 200px;
 }
 
 .filter-right {
@@ -233,10 +357,15 @@ const goAbout = () => router.push("/about");
   border: none;
 }
 
+:deep(.vs__dropdown-menu) {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
 /* GRID */
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 25px;
   padding: 40px;
   max-width: 1200px;
@@ -246,20 +375,84 @@ const goAbout = () => router.push("/about");
 /* CARD */
 .card {
   background: white;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: 0.25s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.body h4 {
+  font-size: 18px;
+  margin: 0;
+  min-height: 80px;
+  overflow: hidden;
+}
+
+.price {
+  font-size: 20px;
+  color: #caa63a;
+  font-weight: bold;
+  margin: 0;
 }
 
 .image {
   position: relative;
-  height: 170px;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: #eee;
 }
 
 .image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
+
+.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 40px;
+  max-width: 1200px;
+  margin: auto;
+}
+
+.list-view .card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 15px;
+}
+
+.list-view .image {
+  width: 280px;
+  min-width: 280px;
+  height: 180px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.list-view .body {
+  flex: 1;
+}
+
+.list-view button {
+  max-width: 200px;
+} 
 
 .badge {
   position: absolute;
@@ -274,8 +467,8 @@ const goAbout = () => router.push("/about");
   background: green;
 }
 
-.dark {
-  background: black;
+.red {
+  background: red;
 }
 
 .body {
@@ -301,10 +494,53 @@ button {
   border: none;
   padding: 10px;
   border-radius: 8px;
+  cursor: pointer;
 }
 
 .outline {
   background: transparent;
   border: 1px solid #ccc;
+}
+
+.empty-state {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #777;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 50px;
+  flex-wrap: wrap;
+}
+
+.pagination button {
+  width: auto;
+  min-width: 42px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.pagination button.active {
+  background: #caa63a;
+  color: white;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

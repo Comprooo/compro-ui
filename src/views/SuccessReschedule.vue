@@ -13,19 +13,17 @@
 
       <!-- CAR CARD -->
       <div class="car-card">
-        <img src="/src/assets/avanza.png" class="car-image" />
+        <img :src="appointment.car?.images?.[0]"/>
 
         <div class="car-content">
-          <h2>Toyota Avanza</h2>
-
-          <h3>Rp 250.000.000</h3>
-
-          <ul>
-            <li>Tahun: 2022</li>
-            <li>Kilometer: 20.000 km</li>
-            <li>Transmisi: automatic</li>
-            <li>Bahan Bakar: bensin</li>
-          </ul>
+          <h2>{{appointment.car?.specifications?.year}} {{ appointment.car?.brand }} {{ appointment.car?.model }} {{ appointment.car?.specifications?.transmission }}</h2>
+          <h3>Rp {{ formatPrice(appointment.car?.price) }}</h3>
+        <ul>
+          <li>Tahun: {{ appointment.car?.specifications?.year }}</li>
+          <li>Kilometer: {{ appointment.car?.specifications?.mileage }}</li>
+          <li>Transmisi: {{ appointment.car?.specifications?.transmission }}</li>
+          <li>Bahan Bakar: {{ appointment.car?.specifications?.fuel }}</li>
+        </ul>
         </div>
       </div>
 
@@ -52,13 +50,13 @@
 
           <!-- DETAIL -->
           <div class="detail-box">
-            <p><strong>Tanggal:</strong> Sabtu, 11 April 2026</p>
+            <p><strong>Tanggal:</strong> {{formatDate(appointment.slot?.date)}}</p>
 
-            <p><strong>Waktu:</strong> 10:00 WIB</p>
+            <p><strong>Waktu:</strong> {{ appointment.slot?.time }}</p>
 
-            <p><strong>Nama:</strong> John Doe</p>
+            <p><strong>Email:</strong> {{ appointment?.email }}</p>
 
-            <p><strong>No. HP:</strong> 081234567891</p>
+            <p><strong>No. HP:</strong> {{ appointment?.phone }}</p>
           </div>
 
           <!-- BUTTON -->
@@ -72,13 +70,55 @@
 </template>
 
 <script setup>
-import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
 import Navbar from "@/components/Navbar.vue";
 
 const router = useRouter();
+const route = useRoute();
+
+const appointment = ref({});
+
+const fetchAppointment = async () => {
+  try {
+    const res = await axios.get(
+      `http://localhost:8000/api/v1/schedules/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    appointment.value = res.data.data;
+
+    console.log(appointment.value);
+
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+onMounted(() => {
+  fetchAppointment();
+});
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
 
 const goAppointments = () => {
-  router.push("/appointments2");
+  router.push("/appointments");
 };
 </script>
 
@@ -122,10 +162,8 @@ const goAppointments = () => {
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
 }
 
-.car-image {
+.car-card img {
   width: 100%;
-  height: 260px;
-  object-fit: cover;
 }
 
 .car-content {

@@ -2,7 +2,7 @@
   <div class="page">
     <!-- HEADER -->
     <div class="header">
-      <span class="back" @click="goBack">← Profile</span>
+      <span class="back" @click='router.push("/home")'>← Profile</span>
       <p>informasi akun Anda</p>
     </div>
 
@@ -14,8 +14,8 @@
           <img src="/src/assets/icon-profilekuningkecil.svg" />
         </div>
 
-        <h2>John Doe</h2>
-        <p>Member AutoKatalog</p>
+        <h2>{{ profile.username }}</h2>
+        <p>{{ profile.role }}</p>
       </div>
 
       <!-- CONTENT -->
@@ -29,7 +29,7 @@
           </div>
           <div>
             <span>Nama Lengkap</span>
-            <strong>John Doe</strong>
+           <strong>{{ profile.username }}</strong>
           </div>
         </div>
 
@@ -39,7 +39,7 @@
           </div>
           <div>
             <span>Email</span>
-            <strong>john.doe@gmail.com</strong>
+            <strong>{{ profile.email }}</strong>
           </div>
         </div>
 
@@ -49,7 +49,7 @@
           </div>
           <div>
             <span>Nomor Telepon</span>
-            <strong>0812 3456 7657</strong>
+            <strong>{{ profile.phone }}</strong>
           </div>
         </div>
 
@@ -59,7 +59,7 @@
           </div>
           <div>
             <span>Bergabung Sejak</span>
-            <strong>15 Januari 2026</strong>
+            <strong>{{ formatDate(profile.created_at) }}</strong>
           </div>
         </div>
 
@@ -67,6 +67,10 @@
         <button class="btn-edit" @click="goEdit">
           <img src="/src/assets/icon-edit.png" />
           Edit Profile
+        </button>
+        <button class="btn-logout" @click="handleLogout">
+          <img src="/src/assets/icon-logout.png" />
+          Logout
         </button>
       </div>
     </div>
@@ -81,9 +85,73 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 const router = useRouter();
+
+const profile = ref({
+  username: "",
+  email: "",
+  phone: "",
+  created_at: "",
+  role: ""
+});
+
+const fetchProfile = async () => {
+  try {
+    const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const result = await response.json();
+    console.log(result);
+
+    if (result.status === "success") {
+      profile.value = result.data;
+    }
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const handleLogout = async () => {
+  const confirmLogout = confirm("Yakin ingin logout?");
+  if (!confirmLogout) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    await fetch("http://localhost:8000/api/v1/auth/logout", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+  } finally {
+    localStorage.removeItem("token");
+    router.push("/");
+  }
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+};
+
+onMounted(() => {
+  fetchProfile();
+});
 
 const goEdit = () => {
   router.push("/profile");
@@ -220,6 +288,28 @@ const goBack = () => {
 
 .btn-edit img {
   width: 18px;
+}
+
+.btn-logout {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f30000;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.btn-logout:hover {
+  background: #d9363e;
+}
+
+.btn-logout img {
+  width: 14px;
 }
 
 /* TIPS */

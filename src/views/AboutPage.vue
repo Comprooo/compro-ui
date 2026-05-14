@@ -1,7 +1,7 @@
 <template>
   <div class="page">
-    <!-- NAVBAR (REPLACED) -->
-    <Navbar />
+    <NavbarUser v-if="isLogin" />
+    <NavbarLanding v-else />
 
     <!-- HERO -->
     <section class="hero">
@@ -84,21 +84,29 @@
       </p>
 
       <div class="cta-buttons">
-        <button class="primary">Lihat Katalog</button>
-        <button class="secondary">Chat dengan AI</button>
+        <button class="primary" @click="goKatalog">Lihat Katalog</button>
+        <button class="secondary" @click="goAI">Chat dengan AI</button>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import Navbar from "@/components/Navbar.vue";
+import NavbarLanding from "@/components/NavbarLanding.vue";
+import NavbarUser from "@/components/Navbar.vue";
 import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+
+const isLogin = ref(false);
+
+onMounted(() => {
+  isLogin.value = !!localStorage.getItem("token");
+});
 
 const router = useRouter();
 
-const goHome = () => router.push("/");
 const goKatalog = () => router.push("/katalog");
+const goAI = () => router.push("/ai");
 </script>
 
 <style scoped>
@@ -210,6 +218,7 @@ const goKatalog = () => router.push("/katalog");
   border: none;
   padding: 12px 20px;
   border-radius: 8px;
+  cursor: pointer;
 }
 
 .secondary {
@@ -217,5 +226,6 @@ const goKatalog = () => router.push("/katalog");
   padding: 12px 20px;
   border-radius: 8px;
   background: white;
+  cursor: pointer;
 }
 </style>

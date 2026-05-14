@@ -12,6 +12,7 @@
           <strong>AutoKatalog</strong>
           <p>Premium Car Collection</p>
         </div>
+
       </div>
 
       <!-- MENU -->

@@ -15,17 +15,17 @@
 
       <!-- CAR CARD -->
       <div class="car-card">
-        <img src="/src/assets/avanza.png" class="car-image" />
+        <img :src="appointment.car?.images?.[0]" />
 
         <div class="car-content">
-          <h2>Toyota Avanza</h2>
-          <h3>Rp 250.000.000</h3>
+          <h2>{{appointment.car?.specifications?.year}} {{ appointment.car?.brand }} {{ appointment.car?.model }} {{ appointment.car?.specifications?.transmission }}</h2>
+          <h3>Rp {{ formatPrice(appointment.car?.price) }}</h3>
 
           <ul>
-            <li>Tahun: 2022</li>
-            <li>Kilometer: 20.000 km</li>
-            <li>Transmisi: automatic</li>
-            <li>Bahan Bakar: bensin</li>
+            <li>Tahun: {{ appointment.car?.specifications?.year }}</li>
+            <li>Kilometer: {{ appointment.car?.specifications?.mileage }} </li>
+            <li>Transmisi: {{ appointment.car?.specifications?.transmission }}</li>
+            <li>Bahan Bakar: {{ appointment.car?.specifications?.fuel }}</li>
           </ul>
         </div>
       </div>
@@ -33,98 +33,99 @@
       <!-- FORM -->
       <div class="form-card">
         <h3>Jadwal Baru</h3>
-
         <p class="subtitle">
           Pilih tanggal dan waktu baru untuk pertemuan Anda
         </p>
-
-        <!-- NAMA -->
-        <div class="form-group">
-          <label>Nama Lengkap *</label>
-
-          <input type="text" placeholder="Masukkan nama lengkap" />
-        </div>
-
-        <!-- HP -->
-        <div class="form-group">
-          <label>No. Handphone *</label>
-
-          <input type="text" placeholder="08xx xxxx xxxx" />
-        </div>
-
-        <!-- EMAIL -->
-        <div class="form-group">
-          <label>Email</label>
-
-          <input type="email" placeholder="email@example.com" />
-        </div>
-
-        <!-- PILIH HARI -->
-        <div class="form-group">
-          <label>Pilih Tanggal Pertemuan *</label>
-
-          <p class="small-text">Pilih dari tanggal yang tersedia</p>
-
-          <div class="date-grid">
-            <button
-              v-for="day in dates"
-              :key="day"
-              @click="selectedDate = day"
-              :class="['date-btn', selectedDate === day ? 'active-date' : '']"
-            >
-              📅 {{ day }}
-            </button>
+          
+        <div class="form-input">
+          <!-- HP -->
+          <div class="form-group">
+            <label>No. Handphone *</label>
+            <input v-model="phone" type="text" placeholder="08xx xxxx xxxx" readonly />
           </div>
-        </div>
 
-        <!-- PILIH JAM -->
-        <div v-if="selectedDate" class="form-group">
-          <label>Pilih Waktu Pertemuan *</label>
-
-          <p class="small-text">Waktu tersedia untuk {{ selectedDate }}</p>
-
-          <div class="time-grid">
-            <button
-              v-for="time in times"
-              :key="time"
-              @click="selectedTime = time"
-              :class="['time-btn', selectedTime === time ? 'active-time' : '']"
-            >
-              🕘 {{ time }}
-            </button>
+          <!-- EMAIL -->
+          <div class="form-group">
+            <label>Email</label>
+            <input v-model="email" type="email" placeholder="email@example.com" readonly />
           </div>
-        </div>
 
-        <!-- LOKASI -->
+          <!-- PILIH HARI -->
+          <div class="form-group">
+            <label>Pilih Tanggal Pertemuan *</label>
+            <p class="hint">Pilih dari tanggal yang tersedia</p>
+            <div class="tanggal-grid">
+             <div
+                v-for="day in availableDates"
+                :key="day"
+                @click="selectDate(day)"
+                :class="['tanggal-item', selectedDate === day ? 'active' : '']"
+              >
+                📅 {{ formatDate(day) }}
+              </div>
+            </div>
+          </div>
+
+          <!-- PILIH JAM -->
+          <div v-if="selectedDate" class="form-group">
+            <label>Pilih Waktu Pertemuan *</label>
+            <p class="hint">Waktu tersedia untuk {{ selectedDate }}</p>
+            <div class="jam-grid">
+              <div
+                v-for="slot in availableTimes"
+                :key="slot.slot_id"
+                @click="selectTime(slot)"
+                :class="[
+                  'jam-item',
+                  selectedSlotId === slot.slot_id ? 'active' : ''
+                ]"
+              >
+                ⏱ {{ slot.time }}
+              </div>
+            </div>
+          </div>
+
+          <!-- LOKASI -->
         <div class="form-group">
           <label>Lokasi Appointment</label>
 
-          <p class="small-text">
-            Lokasi tidak dapat diubah. Tambahkan lokasi lain pada kolom pesan
-            jika ingin pindah lokasi
+          <div class="location-box">
+            <div class="location-header">
+              📍 Lokasi Pertemuan
+            </div>
+
+            <div class="location-name">
+              {{ selectedLocation || "Pilih tanggal terlebih dahulu" }}
+            </div>
+
+            <a
+              v-if="selectedLocationLink"
+              :href="selectedLocationLink"
+              target="_blank"
+              class="map-link"
+            >
+              Buka di Google Maps →
+            </a>
+          </div>
+
+          <p class="hint">
+            Lokasi default dari dealer. Jika ingin perubahan lokasi,
+            silakan tambahkan pada kolom pesan.
           </p>
-
-          <input
-            type="text"
-            value="Rumah abang"
-            disabled
-            class="disabled-input"
-          />
         </div>
 
-        <!-- PESAN -->
-        <div class="form-group">
-          <label>Pesan (Opsional)</label>
-
-          <textarea
-            placeholder="Tambahkan catatan atau pertanyaan..."
-            v-model="message"
-          ></textarea>
+          <!-- PESAN -->
+          <div class="form-group">
+            <label>Pesan (Opsional)</label>
+            <textarea
+              placeholder="Tambahkan catatan atau pertanyaan..."
+              v-model="notes"
+            ></textarea>
+          </div>
         </div>
-
         <!-- BUTTON -->
         <button class="submit-btn" @click="submitReschedule">
-          Buat Jadwal Pertemuan
+          Reschedule Jadwal Pertemuan
         </button>
       </div>
     </div>
@@ -132,41 +133,193 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
+import Swal from "sweetalert2";
 
 const router = useRouter();
+const route = useRoute();
+const loading = ref(false);
+const appointment = ref({});
+const slots = ref([]);
 
-const selectedDate = ref("");
-const selectedTime = ref("");
+const fullName = ref("");
+const phone = ref("");
+const email = ref("");
+const selectedDate = ref(null);
+const selectedTime = ref(null);
+const selectedSlotId = ref(null);
+const selectedLocation = ref("");
+const selectedLocationLink = ref("");
+const notes = ref("");
+
 const message = ref("");
 
-const dates = [
-  "Jumat, 10 April 2026",
-  "Sabtu, 11 April 2026",
-  "Senin, 13 April 2026",
-  "Selasa, 14 April 2026",
-  "Rabu, 15 April 2026",
-  "Kamis, 16 April 2026",
-];
+/* FETCH APPOINTMENT DETAIL */
+const fetchAppointment = async () => {
+  try {
+    loading.value = true;
 
-const times = [
-  "09:00",
-  "10:00",
-  "11:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-];
+    const res = await axios.get(
+      `http://localhost:8000/api/v1/schedules/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
 
+    appointment.value = res.data.data;
+    fullName.value = appointment.value.customer?.name || "";
+    phone.value = appointment.value.phone || "";
+    email.value = appointment.value.email || "";
+    console.log("Appointment:", appointment.value);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+/* FETCH AVAILABLE SLOT */
+const fetchSlots = async () => {
+  try {
+    const res = await axios.get(
+      "http://localhost:8000/api/v1/schedules/available",
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    slots.value = res.data.data;
+    console.log("Available Slots:", slots.value);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+onMounted(() => {
+  fetchAppointment();
+  fetchSlots();
+});
+
+/* FORMAT */
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+/* AVAILABLE DATE */
+const availableDates = computed(() => {
+  return [...new Set(slots.value.map(item => item.date))];
+});
+
+/* AVAILABLE TIME */
+const availableTimes = computed(() => {
+  if (!selectedDate.value) return [];
+
+  return slots.value.filter(
+    slot => slot.date === selectedDate.value
+  );
+});
+
+/* SELECT DATE */
+const selectDate = (date) => {
+  selectedDate.value = date;
+
+  selectedTime.value = "";
+  selectedSlotId.value = null;
+
+  selectedLocation.value = "";
+  selectedLocationLink.value = "";
+};
+
+/* SELECT TIME */
+const selectTime = (slot) => {
+  selectedTime.value = slot.time;
+  selectedSlotId.value = slot.slot_id;
+
+  selectedLocation.value =
+    `${slot.location.location_name} - ${slot.location.address}`;
+
+  selectedLocationLink.value =
+    slot.location?.map_link || "";
+};
+
+/* BACK */
 const goBack = () => {
   router.back();
 };
 
-const submitReschedule = () => {
-  router.push("/successreschedule");
+/* SUBMIT RESCHEDULE */
+const submitReschedule = async () => {
+  if (!selectedDate.value || !selectedTime.value) {
+    Swal.fire({
+      icon: "warning",
+      title: "Tanggal dan Jam Belum Dipilih",
+      text: "Pilih tanggal dan jam dulu!",
+      confirmButtonColor: "#caa63a",
+    });
+    return;
+  }
+
+  try {
+    loading.value = true;
+
+  const payload = {
+    new_slot_id: selectedSlotId.value,
+    notes: notes.value || "-",
+  };
+
+    console.log(payload);
+
+    const res  = await axios.patch(
+      `http://localhost:8000/api/v1/schedules/${route.params.id}/reschedule`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("Appointment success:", res.data);
+
+   Swal.fire({
+      icon: "success",
+      title: "Jadwal Berhasil Dibuat!",
+      text: "Penjual akan segera untuk konfirmasi.",
+      confirmButtonColor: "#caa63a",
+    });
+
+    const scheduleId = res.data.data.id;
+    router.push(`/successreschedule/${scheduleId}`);
+  } catch (err) {
+    console.error(err);
+    console.log(err.response);
+    console.log(err.response?.data);
+
+    Swal.fire({
+      icon: "error",
+      title: "Gagal Membuat Jadwal",
+      text: "Gagal membuat appointment",
+      confirmButtonColor: "#caa63a",
+    });
+  } finally {
+    loading.value = false;
+  }
 };
 </script>
 
@@ -194,7 +347,6 @@ const submitReschedule = () => {
 .back-btn {
   border: none;
   background: transparent;
-
   font-size: 18px;
   cursor: pointer;
 }
@@ -219,55 +371,43 @@ const submitReschedule = () => {
 
 /* CARD */
 .car-card {
-  margin-top: 28px;
-
   background: white;
-  border-radius: 16px;
-
+  border-radius: 12px;
   overflow: hidden;
-
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  max-width: 700px;
+  margin: auto;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-.car-image {
-  width: 100%;
-  height: 260px;
-  object-fit: cover;
+.car-card img {
+   width: 100%;
 }
 
 .car-content {
   padding: 20px;
 }
 
-.car-content h2 {
-  font-size: 22px;
-}
-
 .car-content h3 {
-  margin-top: 8px;
-
-  color: #d4af37;
-  font-size: 20px;
+  color: #caa63a;
 }
 
 .car-content ul {
   margin-top: 16px;
   padding-left: 18px;
-
   color: #666;
-  line-height: 1.9;
+  line-height: 2;
 }
 
 /* FORM */
 .form-card {
   margin-top: 40px;
-
   background: white;
-  border-radius: 16px;
-
-  padding: 26px;
-
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 25px;
+  max-width: 700px;
+  margin: auto;
+  border: 1px solid #e2c46f;
 }
 
 .form-card h3 {
@@ -275,135 +415,147 @@ const submitReschedule = () => {
 }
 
 .subtitle {
-  margin-top: 6px;
   color: #777;
+}
+
+.form-input {
+  margin-top: 30px;
+  border: 1px solid #b1b0ae;
+  border-radius: 12px;
+  padding: 20px;
 }
 
 /* GROUP */
 .form-group {
-  margin-top: 22px;
+  margin-top: 15px;
 }
 
-.form-group label {
-  display: block;
-
-  margin-bottom: 10px;
-
-  font-weight: 600;
-}
-
-/* INPUT */
-input,
-textarea {
-  width: 100%;
-
+.form-group input,
+.form-group textarea {
+  width: 97%;
+  height: 100%;
+  padding: 10px;
+  border-radius: 8px;
   border: none;
-  outline: none;
-
-  background: #f3f3f3;
-
-  border-radius: 10px;
-
-  padding: 14px 16px;
-
-  font-size: 15px;
-
-  box-sizing: border-box;
-}
-
-textarea {
-  min-height: 90px;
+  background: #eee;
+  margin-top: 6px;
   resize: none;
 }
 
-/* DISABLED */
-.disabled-input {
-  background: #ebebeb;
-  color: #666;
+.form-group textarea {
+  height: 80px;
+}
+
+.form-group input[readonly] {
+  background: #e7e7e7;
   cursor: not-allowed;
+  color: #666;
 }
 
-/* SMALL */
-.small-text {
-  margin-bottom: 10px;
-  color: #777;
-  font-size: 14px;
+.hint {
+  font-size: 12px;
+  color: gray;
 }
 
-/* DATE GRID */
-.date-grid {
+/* TANGGAL */
+.tanggal-grid {
+  text-align: center;
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 10px;
+  margin-top: 10px;
 }
 
-/* DATE BTN */
-.date-btn {
-  height: 44px;
-
-  border-radius: 10px;
-  border: 1px solid #ead79c;
-
-  background: white;
-
+.tanggal-item {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
   cursor: pointer;
-
-  font-size: 14px;
-  font-weight: 500;
-
+  background: white;
   transition: 0.2s;
 }
 
-.active-date {
-  background: #d4af37;
-  border: none;
+.tanggal-item:hover {
+  background: #caa63a;;
+  border-color: #caa63a;
+  color: white;
 }
 
-/* TIME GRID */
-.time-grid {
+/* JAM */
+.jam-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
+  margin-top: 10px;
 }
 
-/* TIME BTN */
-.time-btn {
-  height: 42px;
-
-  border-radius: 10px;
-  border: 1px solid #ead79c;
-
-  background: white;
-
+.jam-item {
+  text-align: center;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
   cursor: pointer;
+  background: white;
+}
 
+.jam-item:hover {
+  background: #caa63a;;
+  border-color: #caa63a;
+  color: white;
+}
+
+/* LOCATION BOX */
+.location-box {
+  margin-top: 8px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f8f8f8;
+  border: 1px solid #e2c46f;
+}
+
+.location-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: #caa63a;
+  margin-bottom: 8px;
+}
+
+.location-name {
+  font-size: 15px;
+  color: #333;
+  line-height: 1.5;
+}
+
+.map-link {
+  display: inline-block;
+  margin-top: 12px;
+  color: #caa63a;
+  text-decoration: none;
+  font-weight: 600;
   transition: 0.2s;
 }
 
-.active-time {
-  background: #d4af37;
+.map-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* ACTIVE */
+.active{
+  background: #caa63a;
+  color: white;
   border: none;
 }
 
-/* SUBMIT */
+/* BUTTON */
 .submit-btn {
-  margin-top: 30px;
-
+  margin-top: 20px;
   width: 100%;
-  height: 48px;
-
+  background: #caa63a;
+  color: white;
   border: none;
-  border-radius: 10px;
-
-  background: #d4af37;
-
-  font-size: 15px;
-  font-weight: 600;
-
+  padding: 12px;
+  border-radius: 8px;
   cursor: pointer;
-}
-
-.submit-btn:hover {
-  opacity: 0.9;
 }
 </style>

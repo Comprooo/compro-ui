@@ -20,11 +20,6 @@
 
     <!-- ACTIONS -->
     <div class="actions">
-      <!-- AI -->
-      <div class="ai" @click="goAI">
-        <img src="/src/assets/ai-asistant.svg" />
-        <span>AI Assistant</span>
-      </div>
 
       <!-- LOGIN -->
       <button class="login" @click="goLogin">Login</button>

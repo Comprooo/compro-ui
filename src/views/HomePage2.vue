@@ -35,7 +35,7 @@
 
       <!-- DATA ADA -->
       <div v-else-if="cars.length > 0" class="grid">
-        <div class="card" v-for="car in cars" :key="car.car_id">
+        <div class="card" v-for="car in cars.slice(0,6)" :key="car.car_id">
           <div class="image">
             <img :src="car.thumbnail_url || '/default-car.png'" />
             <span
@@ -88,14 +88,25 @@ const fetchCars = async () => {
     const res = await axios.get("http://localhost:8000/api/v1/cars", {
       params: {
         page: 1,
-        limit: 9,
+        limit: 100,
       },
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`, // kalau butuh token
       },
     });
 
-    cars.value = res.data.data;
+    cars.value = res.data.data.cars.sort((a, b) => {
+      // tersedia di atas
+      if (a.status === "Tersedia" && b.status !== "Tersedia") {
+        return -1;
+      }
+
+      if (a.status !== "Tersedia" && b.status === "Tersedia") {
+        return 1;
+      }
+
+      return 0;
+    });
     console.log(cars.value);
   } catch (err) {
     console.error(err);
@@ -144,6 +155,9 @@ const goDetail = (id) => {
   font-size: 48px;
 }
 
+.hero p {
+  padding-bottom: 30px;
+}
 .hero span {
   color: #caa63a;
 }
@@ -172,6 +186,7 @@ const goDetail = (id) => {
 }
 
 .lihat-btn {
+  height: 7vh;
   background: #caa63a;
   color: white;
   border: none;

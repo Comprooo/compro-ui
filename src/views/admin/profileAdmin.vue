@@ -1,89 +1,76 @@
 <template>
-  <div class="profile-page">
+  <div class="page">
     <!-- HEADER -->
-    <div class="topbar">
-      <div class="back-section" @click="goBack">
-        <span class="back-icon">←</span>
-
-        <div>
-          <h2>Profil</h2>
-          <p>informasi akun Anda</p>
-        </div>
-      </div>
+    <div class="header">
+      <span class="back" @click='router.push("/admin/dashboard")'>← Profile</span>
+      <p>informasi akun Anda</p>
     </div>
 
-    <!-- CARD -->
-    <div class="profile-card">
+    <!-- PROFILE CARD -->
+    <div class="card">
       <!-- TOP -->
-      <div class="profile-header">
-        <div class="profile-avatar">
-          <img src="/src/assets/icon-profilekuning.svg" alt="" />
+      <div class="card-top">
+        <div class="avatar">
+          <img src="/src/assets/icon-profilekuningkecil.svg" />
         </div>
 
-        <h1>John Doe</h1>
-        <p>Admin AutoKatalog</p>
+        <h2>{{ profile.username }}</h2>
+        <p>{{ profile.role }}</p>
       </div>
 
       <!-- CONTENT -->
-      <div class="profile-content">
-        <h3>Informasi Pribadi</h3>
+      <div class="card-body">
+        <h4>Informasi Pribadi</h4>
 
         <!-- ITEM -->
-        <div class="info-item">
-          <div class="icon-circle yellow">
-            <img src="/src/assets/icon-profilekuning.svg" alt="" />
+        <div class="item">
+          <div class="icon gold">
+            <img src="/src/assets/icon-profilekuning.svg" />
           </div>
-
-          <div class="info-text">
+          <div>
             <span>Nama Lengkap</span>
-            <h4>John Doe</h4>
+           <strong>{{ profile.username }}</strong>
           </div>
         </div>
 
-        <!-- ITEM -->
-        <div class="info-item">
-          <div class="icon-circle green">
-            <img src="/src/assets/icon-msghijau.png" alt="" />
+        <div class="item">
+          <div class="icon green">
+            <img src="/src/assets/icon-msghijau.png" />
           </div>
-
-          <div class="info-text">
+          <div>
             <span>Email</span>
-            <h4>john.doe@gmail.com</h4>
+            <strong>{{ profile.email }}</strong>
           </div>
         </div>
 
-        <!-- ITEM -->
-        <div class="info-item">
-          <div class="icon-circle purple">
-            <img src="/src/assets/icon-callungu.png" alt="" />
+        <div class="item">
+          <div class="icon purple">
+            <img src="/src/assets/icon-callungu.png" />
           </div>
-
-          <div class="info-text">
+          <div>
             <span>Nomor Telepon</span>
-            <h4>0812 3456 7657</h4>
+            <strong>{{ profile.phone }}</strong>
           </div>
         </div>
 
-        <!-- ITEM -->
-        <div class="info-item">
-          <div class="icon-circle orange">
-            <img
-              src="/src/assets/icon-instagram.svg"
-              alt=""
-              class="instagram-icon"
-            />
+        <div class="item">
+          <div class="icon orange">
+            <img src="/src/assets/icon-calenderyellow.svg" />
           </div>
-
-          <div class="info-text">
-            <span>Instagram</span>
-            <h4>@adminjohn</h4>
+          <div>
+            <span>Bergabung Sejak</span>
+            <strong>{{ formatDate(profile.created_at) }}</strong>
           </div>
         </div>
 
         <!-- BUTTON -->
-        <button class="edit-btn" @click="goEditProfile">
-          <img src="/src/assets/admin/icon-edit.svg" alt="" />
+        <button class="btn-edit" @click="goEdit">
+          <img src="/src/assets/icon-edit.png" />
           Edit Profile
+        </button>
+        <button class="btn-logout" @click="handleLogout">
+          <img src="/src/assets/icon-logout.png" />
+          Logout
         </button>
       </div>
     </div>
@@ -91,217 +78,261 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import Swal from "sweetalert2";
 
 const router = useRouter();
 
-const goBack = () => {
-  router.push("/admin/dashboard");
+const profile = ref({
+  username: "",
+  email: "",
+  phone: "",
+  created_at: "",
+  role: ""
+});
+
+const fetchProfile = async () => {
+  try {
+    const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    const result = await response.json();
+    console.log(result);
+
+    if (result.status === "success") {
+      profile.value = result.data;
+    }
+  } catch (error) {
+    console.error(error);
+  }
 };
 
-const goEditProfile = () => {
+const handleLogout = async () => {
+  const result = await Swal.fire({
+    title: "Yakin ingin logout?",
+    text: "Anda harus login kembali untuk masuk ke akun.",
+    icon: "warning",
+
+    showCancelButton: true,
+    confirmButtonText: "Ya, Logout",
+    cancelButtonText: "Batal",
+
+    confirmButtonColor: "#d9363e",
+    cancelButtonColor: "#caa63a",
+
+    reverseButtons: true,
+
+    customClass: {
+      popup: "logout-popup",
+      title: "logout-title",
+      htmlContainer: "logout-text",
+      confirmButton: "logout-confirm",
+      cancelButton: "logout-cancel",
+    }
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    const token = localStorage.getItem("token");
+
+    await fetch("http://localhost:8000/api/v1/auth/logout", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await Swal.fire({
+      icon: "success",
+      title: "Berhasil Logout",
+      text: "Sampai jumpa kembali 👋",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+
+  } catch (error) {
+    console.error(error);
+  } finally {
+    localStorage.removeItem("token");
+    router.push("/");
+  }
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric"
+  });
+};
+
+onMounted(() => {
+  fetchProfile();
+});
+
+const goEdit = () => {
   router.push("/admin/editprofile");
+};
+
+const goBack = () => {
+  router.back();
 };
 </script>
 
 <style scoped>
-.profile-page {
-  min-height: 100vh;
+/* PAGE */
+.page {
   background: #f5f5f5;
+  min-height: 100vh;
+  padding: 40px;
   font-family: "Segoe UI", sans-serif;
 }
 
-/* TOPBAR */
-.topbar {
-  height: 92px;
-  background: white;
-  border-bottom: 1px solid #e7e7e7;
-
-  display: flex;
-  align-items: center;
-
-  padding: 0 36px;
-}
-
-.back-section {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-
-  cursor: pointer;
-}
-
-.back-icon {
-  font-size: 28px;
-  color: #111;
-}
-
-.back-section h2 {
-  font-size: 20px;
-  font-weight: 700;
-  color: #111;
-}
-
-.back-section p {
-  font-size: 14px;
-  color: #666;
-}
-
-/* CARD */
-.profile-card {
-  width: 740px;
-
-  margin: 40px auto;
-
-  background: white;
-  border-radius: 18px;
-
-  overflow: hidden;
-
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-}
-
 /* HEADER */
-.profile-header {
-  height: 290px;
-  background: #d4af37;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.profile-avatar {
-  width: 96px;
-  height: 96px;
-
-  background: white;
-  border-radius: 50%;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-
+.header {
   margin-bottom: 20px;
 }
 
-.profile-avatar img {
-  width: 48px;
+.back {
+  cursor: pointer;
+  font-weight: bold;
 }
 
-.profile-header h1 {
-  font-size: 22px;
+.header p {
+  color: #777;
+}
+
+/* CARD */
+.card {
+  max-width: 700px;
+  margin: auto;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* TOP */
+.card-top {
+  background: #caa63a;
+  text-align: center;
+  padding: 40px 20px;
   color: white;
-  font-weight: 700;
-  margin-bottom: 6px;
 }
 
-.profile-header p {
-  color: white;
-  font-size: 18px;
-}
-
-/* CONTENT */
-.profile-content {
-  padding: 34px 36px 30px;
-}
-
-.profile-content h3 {
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 34px;
-  color: #111;
-}
-
-/* INFO ITEM */
-.info-item {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-
-  margin-bottom: 34px;
-}
-
-.icon-circle {
-  width: 54px;
-  height: 54px;
-
+.avatar {
+  width: 70px;
+  height: 70px;
+  background: white;
   border-radius: 50%;
-
+  margin: auto;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
-.icon-circle img {
-  width: 24px;
+.avatar img {
+  width: 30px;
 }
 
-.yellow {
-  background: #f6edcf;
+/* BODY */
+.card-body {
+  background: white;
+  padding: 30px;
 }
 
+.card-body h4 {
+  margin-bottom: 20px;
+}
+
+/* ITEM */
+.item {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.item span {
+  font-size: 12px;
+  color: #777;
+}
+
+.item strong {
+  display: block;
+}
+
+/* ICON */
+.icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon img {
+  width: 18px;
+}
+
+.gold {
+  background: #f4e2a4;
+}
 .green {
-  background: #dff5d9;
+  background: #d4f5d4;
 }
-
 .purple {
-  background: #eedcff;
+  background: #eadcff;
 }
-
 .orange {
-  background: #ffe5c6;
-}
-
-.instagram-icon {
-  width: 26px;
-}
-
-.info-text span {
-  font-size: 16px;
-  color: #7b7b7b;
-}
-
-.info-text h4 {
-  font-size: 19px;
-  font-weight: 700;
-  color: #111;
-
-  margin-top: 4px;
+  background: #ffe2b3;
 }
 
 /* BUTTON */
-.edit-btn {
+.btn-edit {
   width: 100%;
-  height: 56px;
-
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #caa63a;
   border: none;
-  border-radius: 12px;
-
-  background: #d4af37;
-  color: #111;
-
-  font-size: 20px;
-  font-weight: 600;
-
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   gap: 10px;
-
   cursor: pointer;
-
-  margin-top: 30px;
-
-  transition: 0.2s;
 }
 
-.edit-btn:hover {
-  opacity: 0.9;
+.btn-edit img {
+  width: 18px;
 }
 
-.edit-btn img {
-  width: 22px;
+.btn-logout {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f30000;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.btn-logout:hover {
+  background: #d9363e;
+}
+
+.btn-logout img {
+  width: 14px;
 }
 </style>

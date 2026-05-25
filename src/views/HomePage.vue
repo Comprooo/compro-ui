@@ -35,7 +35,7 @@
 
       <!-- DATA ADA -->
       <div v-else-if="cars.length > 0" class="grid">
-        <div class="card" v-for="car in cars" :key="car.car_id">
+        <div class="card" v-for="car in cars.slice(0,6)" :key="car.car_id">
           <div class="image">
             <img :src="car.thumbnail_url || '/default-car.png'" />
             <span
@@ -88,15 +88,27 @@ const fetchCars = async () => {
     const res = await axios.get("http://localhost:8000/api/v1/cars", {
       params: {
         page: 1,
-        limit: 9,
+        limit: 100,
       },
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`, // kalau butuh token
+        Authorization: `Bearer ${localStorage.getItem("token")}`, 
       },
     });
 
-    cars.value = res.data.data;
+    cars.value = res.data.data.cars.sort((a, b) => {
+      if (a.status === "Tersedia" && b.status !== "Tersedia") {
+        return -1;
+      }
+
+      if (a.status !== "Tersedia" && b.status === "Tersedia") {
+        return 1;
+      }
+
+      return 0;
+    });
+
     console.log(cars.value);
+
   } catch (err) {
     console.error(err);
   } finally {
@@ -130,8 +142,8 @@ const goDetail = (id) => {
 .page {
   font-family: "Segoe UI", sans-serif;
   background: #f3f3f3;
+  width: 100%;
   min-height: 100vh;
-
 }
 
 /* HERO */
@@ -142,6 +154,10 @@ const goDetail = (id) => {
 
 .hero h1 {
   font-size: 48px;
+}
+
+.hero p {
+  padding-bottom: 30px; 
 }
 
 .hero span {
@@ -157,7 +173,7 @@ const goDetail = (id) => {
 
 /* LIST */
 .list {
-  padding: 40px;
+  padding: 40px
 }
 
 .list h2 {
@@ -172,11 +188,12 @@ const goDetail = (id) => {
 }
 
 .lihat-btn {
+  height: 7vh;
   background: #caa63a;
   color: white;
   border: none;
   padding: 6px 14px;
-  border-radius: 6px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
@@ -196,7 +213,7 @@ const goDetail = (id) => {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  transition: 0.25s;;
+  transition: 0.25s;
 }
 
 .card:hover {

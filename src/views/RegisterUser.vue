@@ -151,6 +151,8 @@ const goLogin = () => {
 <style scoped>
 /* BACKGROUND */
 .container {
+  position: fixed;
+  inset: 0;
   height: 100vh;
   display: flex;
   justify-content: center;

@@ -125,7 +125,7 @@ const goAppointments = () => {
 <style scoped>
 /* PAGE */
 .page {
-  min-height: 100vh;
+  min-height: 160vh;
   background: #f5f5f5;
   font-family: "Segoe UI", sans-serif;
 }

@@ -22,7 +22,7 @@
 
         <div class="card">
           <p>Confirmed</p>
-          <h2 class="green">{{ summary.completed }}</h2>
+          <h2 class="green">{{ summary.confirmed }}</h2>
         </div>
 
         <div class="card">
@@ -73,7 +73,7 @@
         >
           <!-- IMAGE -->
           <img
-            :src="item.car.images?.[0]"
+            :src="item.car.thumbnail"
             class="car-image"
           />
 
@@ -205,7 +205,7 @@
               </template>
 
               <!-- CONFIRMED -->
-              <template v-if="item.status === 'completed'">
+              <template v-if="item.status === 'confirmed'">
 
                 <a
                   href="https://wa.me/628123456789"
@@ -555,6 +555,7 @@ const cancelAppointment = async (id) => {
   justify-content: center;
   font-size: 12px;
   font-weight: 600;
+  margin-left: 12px;
 }
 
 .status.pending {
@@ -562,7 +563,7 @@ const cancelAppointment = async (id) => {
   color: #3b3b39;
 }
 
-.status.completed {
+.status.confirmed {
   background: #d4edda;
   color: #155724;
 }

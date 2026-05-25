@@ -4,6 +4,7 @@ import router from "./router";
 
 import VCalendar from "v-calendar";
 import "v-calendar/style.css";
+import "./style.css";
 
 const app = createApp(App);
 

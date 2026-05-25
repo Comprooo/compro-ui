@@ -19,24 +19,24 @@
           <div v-if="showFilter" class="dropdown">
             <div
               class="dropdown-item"
-              :class="{ active: selectedFilter === 'week' }"
-              @click="selectFilter('week')"
+              :class="{ active: selectedFilter === 'mingguan' }"
+              @click="selectFilter('mingguan')"
             >
               Week
             </div>
 
             <div
               class="dropdown-item"
-              :class="{ active: selectedFilter === 'month' }"
-              @click="selectFilter('month')"
+              :class="{ active: selectedFilter === 'bulanan' }"
+              @click="selectFilter('bulanan')"
             >
               Month
             </div>
 
             <div
               class="dropdown-item"
-              :class="{ active: selectedFilter === 'year' }"
-              @click="selectFilter('year')"
+              :class="{ active: selectedFilter === 'tahunan' }"
+              @click="selectFilter('tahunan')"
             >
               Year
             </div>
@@ -59,8 +59,7 @@
             >
               <div
                 class="bar"
-                :class="{ gold: item.gold }"
-                :style="{ height: item.value * 14 + 'px' }"
+                :style="{ height: Math.max(item.value * 40, 6) + 'px' }"
               >
                 <span>{{ item.value }}</span>
               </div>
@@ -75,12 +74,16 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import axios from "axios";
+
 import AdminSidebar from "@/components/AdminSidebar.vue";
 import AdminTopbar from "@/components/AdminTopbar.vue";
 
 const showFilter = ref(false);
-const selectedFilter = ref("year");
+const selectedFilter = ref("tahunan");
+
+const loading = ref(false);
 
 const toggleFilter = () => {
   showFilter.value = !showFilter.value;
@@ -89,23 +92,59 @@ const toggleFilter = () => {
 const selectFilter = (type) => {
   selectedFilter.value = type;
   showFilter.value = false;
+
+  fetchStats();
 };
 
-/* CHART DATA */
-const chartData = [
-  { label: "JAN", value: 2, gold: false },
-  { label: "FEB", value: 7, gold: true },
-  { label: "MAR", value: 6, gold: false },
-  { label: "APR", value: 4, gold: true },
-  { label: "MAY", value: 11, gold: false },
-  { label: "JUN", value: 6, gold: true },
-  { label: "JUL", value: 6, gold: false },
-  { label: "AUG", value: 10, gold: true },
-  { label: "SEP", value: 13, gold: false },
-  { label: "OCT", value: 14, gold: true },
-  { label: "NOV", value: 15, gold: false },
-  { label: "DES", value: 11, gold: true },
-];
+// CHART DATA
+const chartData = ref([]);
+
+onMounted(() => {
+  fetchStats();
+});
+
+const fetchStats = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      "http://localhost:8000/api/v1/admin/stats",
+      {
+        params: {
+          filter: selectedFilter.value,
+        },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Accept: "application/json",
+        },
+      }
+    );
+
+    console.log("FULL RESPONSE:", res.data);
+
+    const data = res.data.data || {};
+    const periods = data.periods || [];
+
+    chartData.value = periods.map((item, index) => {
+      const totalAppointments =
+        (item.appointments?.pending || 0) +
+        (item.appointments?.confirmed || 0) +
+        (item.appointments?.cancelled || 0) +
+        (item.appointments?.completed || 0);
+
+      return {
+        label: item.label,
+        value: totalAppointments,
+        gold: index % 2 === 1,
+      };
+    });
+  } catch (err) {
+    console.error("STATUS:", err.response?.status);
+    console.error("ERROR DATA:", err.response?.data);
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <style scoped>
@@ -244,18 +283,10 @@ const chartData = [
 
 .bar {
   width: 46px;
-
-  background: white;
-
-  border-radius: 8px 8px 0 0;
-
-  position: relative;
-
-  transition: 0.3s;
-}
-
-.bar.gold {
   background: #d4af37;
+  border-radius: 8px 8px 0 0;
+  position: relative;
+  transition: 0.3s;
 }
 
 .bar span {

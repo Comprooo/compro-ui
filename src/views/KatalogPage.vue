@@ -161,24 +161,26 @@ const formatNumber = (num) => {
 };
 
 const totalCars = computed(() => {
-  return allCars.value.length;
+  return statistics.value.total;
 });
 
 const availableCars = computed(() => {
-  return allCars.value.filter(
-    car => car.status === "Tersedia"
-  ).length;
+  return statistics.value.tersedia;
 });
 
 const soldCars = computed(() => {
-  return allCars.value.filter(
-    car => car.status === "Terjual"
-  ).length;
+  return statistics.value.terjual;
 });
 
 onMounted(() => {
   isLogin.value = !!localStorage.getItem("token");
   fetchCars();
+});
+
+const statistics = ref({
+  total: 0,
+  tersedia: 0,
+  terjual: 0,
 });
 
 const fetchCars = async () => {
@@ -190,7 +192,7 @@ const fetchCars = async () => {
       {
         params: {
           page: 1,
-          limit: 100, 
+          limit: 100,
         },
 
         headers: {
@@ -201,28 +203,39 @@ const fetchCars = async () => {
       }
     );
 
-    allCars.value = res.data.data;
-    cars.value = res.data.data;
+    // ambil statistics dari backend
+    statistics.value = res.data.data.statistics;
 
+    // ambil array cars
+    allCars.value = res.data.data.cars;
+    cars.value = res.data.data.cars.sort((a, b) => {
+    // tersedia di atas
+    if (a.status === "Tersedia" && b.status !== "Tersedia") {
+      return -1;
+    }
+
+    if (a.status !== "Tersedia" && b.status === "Tersedia") {
+      return 1;
+    }
+
+    return 0;
+    });
+
+    // generate filter option
     brands.value = [
       ...new Set(allCars.value.map(car => car.brand)),
     ];
 
     years.value = [
-      ...new Set(
-        allCars.value.map(
-          car => car.year
-        )
-      ),
+      ...new Set(allCars.value.map(car => car.year)),
     ];
 
     transmissions.value = [
       ...new Set(
-        allCars.value.map(
-          car => car.transmission
-        )
+        allCars.value.map(car => car.transmission)
       ),
     ];
+
   } catch (err) {
     console.error(err);
   } finally {

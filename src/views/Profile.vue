@@ -2,7 +2,7 @@
   <div class="page">
     <!-- HEADER -->
     <div class="header">
-      <span class="back" @click="goBack">← Kembali ke Detail Mobil</span>
+      <span class="back" @click="goBack">← Kembali ke profile</span>
       <h2>Edit Profile</h2>
       <p>Kelola informasi profil Anda</p>
     </div>
@@ -95,6 +95,7 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { ref, onMounted } from "vue";
+import Swal from "sweetalert2";
 
 const profile = ref({
   username: "",
@@ -151,14 +152,26 @@ const updateProfile = async () => {
     console.log(result);
 
     if (response.ok) {
-      alert("Profile berhasil diupdate");
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: "Profile berhasil diupdate"
+      });
       router.push("/viewprofile");
     } else {
-      alert(result.message || "Gagal update profile");
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: result.message || "Gagal update profile"
+      });
     }
   } catch (error) {
     console.error(error);
-    alert("Terjadi kesalahan");
+    Swal.fire({
+      icon: 'error',
+      title: 'Terjadi Kesalahan',
+      text: "Terjadi kesalahan saat mengupdate profile"
+    });
   }
 };
 
@@ -168,12 +181,20 @@ const updatePassword = async () => {
 
     // VALIDASI FRONTEND
     if (!password.value.current || !password.value.new || !password.value.confirm) {
-      alert("Semua field password wajib diisi");
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: "Semua field password wajib diisi"
+      });
       return;
     }
 
     if (password.value.new !== password.value.confirm) {
-      alert("Konfirmasi password tidak sama");
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: "Konfirmasi password tidak sama"
+      });
       return;
     }
 
@@ -194,7 +215,11 @@ const updatePassword = async () => {
     console.log(result);
 
     if (response.ok) {
-      alert("Password berhasil diubah");
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil',
+        text: "Password berhasil diubah"
+      });
 
       // reset form
       password.value = {
@@ -206,12 +231,20 @@ const updatePassword = async () => {
       showPasswordForm.value = false;
 
     } else {
-      alert(result.message || "Gagal ganti password");
+      Swal.fire({
+        icon: 'error',
+        title: 'Gagal',
+        text: result.message || "Gagal ganti password",
+      });
     }
 
   } catch (error) {
     console.error(error);
-    alert("Terjadi kesalahan");
+    Swal.fire({
+      icon: 'error',
+      title: 'Terjadi Kesalahan',
+      text: "Terjadi kesalahan saat mengganti password"
+    });
   }
 };
 
@@ -222,7 +255,7 @@ const goSave = () => {
 };
 
 const goCancel = () => {
-  router.push("/viewprofile"); // bisa ke profile / home
+  router.push("/viewprofile"); 
 };
 
 const goBack = () => {

@@ -18,7 +18,11 @@
             <!-- SEARCH -->
             <div class="search-box">
               <img src="/src/assets/admin/icon-search.svg" />
-              <input type="text" placeholder="Search" />
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search"
+              />
             </div>
 
             <!-- BUTTON -->
@@ -28,251 +32,107 @@
 
         <!-- GRID -->
         <div class="cars-grid">
-          <!-- CARD 1 -->
-          <div class="car-card">
+
+          <!-- LOADING -->
+          <div v-if="loading">
+            Loading...
+          </div>
+
+          <!-- CARD -->
+          <div
+            v-else
+            class="car-card"
+            v-for="car in paginatedCars"
+            :key="car.car_id"
+          >
             <div class="image-wrapper">
-              <img src="/src/assets/camry.png" class="car-image" />
+              <img
+                :src="car.thumbnail_url || '/default-car.png'"
+              />
 
-              <div class="date-badge">7/2/2026</div>
-
-              <div class="status-badge available">Tersedia</div>
+              <div
+                class="status-badge"
+                :class="
+                  car.status === 'Tersedia'
+                    ? 'available'
+                    : 'sold'
+                "
+              >
+                {{ car.status }}
+              </div>
             </div>
 
             <div class="card-content">
-              <h3>Toyota Camry</h3>
+              <h3>
+                {{ car.year }}
+                {{ car.brand }}
+                {{ car.model }}
+              </h3>
 
-              <h2>Rp 550.000.000</h2>
+              <h2>
+                Rp {{ formatPrice(car.price) }}
+              </h2>
 
               <div class="specs">
                 <div class="spec">
                   <img src="/src/assets/admin/icon-calendar2.svg" />
-                  <span>2022</span>
+                  <span>{{ car.year }}</span>
                 </div>
 
                 <div class="spec">
                   <img src="/src/assets/admin/icon-km.svg" />
-                  <span>15.000 km</span>
+                  <span>{{ car.mileage }}</span>
                 </div>
 
                 <div class="spec">
                   <img src="/src/assets/admin/icon-mesin.svg" />
-                  <span>Automatic</span>
+                  <span>{{ car.transmission }}</span>
                 </div>
 
                 <div class="spec">
                   <img src="/src/assets/admin/icon-bensin.svg" />
-                  <span>Bensin</span>
+                  <span>{{ car.fuel }}</span>
                 </div>
               </div>
 
-              <button class="edit-btn" @click="goEdit">Edit</button>
-            </div>
-          </div>
+              <!-- BUTTONS -->
+              <div class="button-group">
+                <button
+                  class="edit-btn"
+                  @click="goEdit(car.car_id)"
+                >
+                  Edit
+                </button>
 
-          <!-- CARD 2 -->
-          <div class="car-card">
-            <div class="image-wrapper">
-              <img src="/src/assets/hrv.png" class="car-image" />
-
-              <div class="date-badge">4/1/2026</div>
-
-              <div class="status-badge sold">Terjual</div>
-            </div>
-
-            <div class="card-content">
-              <h3>Honda CR-V</h3>
-
-              <h2>Rp 650.000.000</h2>
-
-              <div class="specs">
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-calendar2.svg" />
-                  <span>2023</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-km.svg" />
-                  <span>8.000 km</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-mesin.svg" />
-                  <span>Automatic</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-bensin.svg" />
-                  <span>Bensin</span>
-                </div>
+                <button
+                  class="detail-btn"
+                  @click="goDetail(car.car_id)"
+                >
+                  Lihat Detail
+                </button>
               </div>
-
-              <button class="detail-btn" @click="goDetail">Lihat Detail</button>
             </div>
           </div>
+        </div>
+        <!-- PAGINATION -->
+        <div class="pagination">
+          <button
+            @click="prevPage"
+            :disabled="currentPage === 1"
+          >
+            Prev
+          </button>
 
-          <!-- CARD 3 -->
-          <div class="car-card">
-            <div class="image-wrapper">
-              <img src="/src/assets/mazdacx5.png" class="car-image" />
+          <span>
+            Page {{ currentPage }} / {{ totalPages }}
+          </span>
 
-              <div class="date-badge">31/12/2025</div>
-
-              <div class="status-badge sold">Terjual</div>
-            </div>
-
-            <div class="card-content">
-              <h3>Mazda CX-5</h3>
-
-              <h2>Rp 480.000.000</h2>
-
-              <div class="specs">
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-calendar2.svg" />
-                  <span>2021</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-km.svg" />
-                  <span>25.000 km</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-mesin.svg" />
-                  <span>Automatic</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-bensin.svg" />
-                  <span>Bensin</span>
-                </div>
-              </div>
-
-              <button class="detail-btn" @click="goDetail">Lihat Detail</button>
-            </div>
-          </div>
-
-          <!-- CARD 4 -->
-          <div class="car-card">
-            <div class="image-wrapper">
-              <img src="/src/assets/avanza.png" class="car-image" />
-
-              <div class="date-badge">27/11/2025</div>
-
-              <div class="status-badge sold">Terjual</div>
-            </div>
-
-            <div class="card-content">
-              <h3>Toyota Avanza</h3>
-
-              <h2>Rp 250.000.000</h2>
-
-              <div class="specs">
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-calendar2.svg" />
-                  <span>2022</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-km.svg" />
-                  <span>20.000 km</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-mesin.svg" />
-                  <span>Automatic</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-bensin.svg" />
-                  <span>Bensin</span>
-                </div>
-              </div>
-
-              <button class="detail-btn" @click="goDetail">Lihat Detail</button>
-            </div>
-          </div>
-
-          <!-- CARD 5 -->
-          <div class="car-card">
-            <div class="image-wrapper">
-              <img src="/src/assets/civic.png" class="car-image" />
-
-              <div class="date-badge">11/11/2025</div>
-
-              <div class="status-badge available">Tersedia</div>
-            </div>
-
-            <div class="card-content">
-              <h3>Honda Civic Type R</h3>
-
-              <h2>Rp 950.000.000</h2>
-
-              <div class="specs">
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-calendar2.svg" />
-                  <span>2023</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-km.svg" />
-                  <span>3.000 km</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-mesin.svg" />
-                  <span>Manual</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-bensin.svg" />
-                  <span>Bensin</span>
-                </div>
-              </div>
-
-              <button class="edit-btn" @click="goEdit">Edit</button>
-            </div>
-          </div>
-
-          <!-- CARD 6 -->
-          <div class="car-card">
-            <div class="image-wrapper">
-              <img src="/src/assets/nissanxtrail.png" class="car-image" />
-
-              <div class="date-badge">16/10/2025</div>
-
-              <div class="status-badge available">Tersedia</div>
-            </div>
-
-            <div class="card-content">
-              <h3>Nissan X-Trail</h3>
-
-              <h2>Rp 580.000.000</h2>
-
-              <div class="specs">
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-calendar2.svg" />
-                  <span>2023</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-km.svg" />
-                  <span>12.000 km</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-mesin.svg" />
-                  <span>Automatic</span>
-                </div>
-
-                <div class="spec">
-                  <img src="/src/assets/admin/icon-bensin.svg" />
-                  <span>Bensin</span>
-                </div>
-              </div>
-
-              <button class="edit-btn" @click="goEdit">Edit</button>
-            </div>
-          </div>
+          <button
+            @click="nextPage"
+            :disabled="currentPage === totalPages"
+          >
+            Next
+          </button>
         </div>
       </div>
     </main>
@@ -280,17 +140,162 @@
 </template>
 
 <script setup>
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
+import axios from "axios";
 
 import AdminSidebar from "@/components/AdminSidebar.vue";
 import AdminTopbar from "@/components/AdminTopbar.vue";
 
 const router = useRouter();
 
-/* ROUTING */
-const goTambah = () => router.push("/admin/addkatalog");
-const goEdit = () => router.push("/admin/editkatalog");
-const goDetail = () => router.push("/admin/katalog");
+const cars = ref([]);
+const loading = ref(false);
+const searchQuery = ref("");
+const currentPage = ref(1);
+const itemsPerPage = 12;
+
+/* =========================
+   PAGINATION
+========================= */
+const totalPages = computed(() => {
+  return Math.ceil(
+    filteredCars.value.length / itemsPerPage
+  );
+});
+
+const paginatedCars = computed(() => {
+  const start =
+    (currentPage.value - 1) * itemsPerPage;
+
+  const end = start + itemsPerPage;
+
+  return filteredCars.value.slice(start, end);
+});
+
+const nextPage = () => {
+  if (currentPage.value < totalPages.value) {
+    currentPage.value++;
+  }
+};
+
+const prevPage = () => {
+  if (currentPage.value > 1) {
+    currentPage.value--;
+  }
+};
+
+watch(searchQuery, () => {
+  currentPage.value = 1;
+});
+
+/* =========================
+   FETCH CARS
+========================= */
+const fetchCars = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      "http://localhost:8000/api/v1/cars",
+      {
+        params: {
+          page: 1,
+          limit: 100,
+        },
+
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    cars.value = res.data.data.cars;
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchCars();
+});
+
+/* =========================
+   SORT + SEARCH
+========================= */
+const filteredCars = computed(() => {
+  let filtered = [...cars.value];
+
+  // search
+  filtered = filtered.filter((car) => {
+    const searchText = `
+      ${car.brand}
+      ${car.model}
+      ${car.year}
+      ${car.transmission}
+      ${car.fuel}
+      ${car.status}
+      ${car.price}
+      ${car.mileage}
+    `.toLowerCase();
+
+    return searchText.includes(
+      searchQuery.value.toLowerCase()
+    );
+  });
+
+  // tersedia dulu baru terjual
+  filtered.sort((a, b) => {
+    if (
+      a.status?.toLowerCase() === "tersedia" &&
+      b.status?.toLowerCase() !== "tersedia"
+    ) {
+      return -1;
+    }
+
+    if (
+      a.status?.toLowerCase() !== "tersedia" &&
+      b.status?.toLowerCase() === "tersedia"
+    ) {
+      return 1;
+    }
+
+    return 0;
+  });
+
+  return filtered;
+});
+
+/* =========================
+   FORMAT
+========================= */
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleDateString("id-ID");
+};
+
+/* =========================
+   ROUTING
+========================= */
+const goTambah = () => {
+  router.push("/admin/addkatalog");
+};
+
+const goEdit = (id) => {
+  router.push(`/admin/editkatalog/${id}`);
+};
+
+const goDetail = (id) => {
+  router.push(`/admin/detail/${id}`);
+};
 </script>
 
 <style scoped>
@@ -390,35 +395,40 @@ const goDetail = () => router.push("/admin/katalog");
 .cars-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-
-  gap: 24px;
+  gap: 25px;
+  padding: 40px;
+  max-width: 1200px;
+  margin: auto;
 }
 
 /* CARD */
 .car-card {
   background: white;
-  border-radius: 18px;
-
+  border-radius: 16px;
   overflow: hidden;
-
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-
-  transition: 0.25s;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: 0.25s;;
 }
 
 .car-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12);
 }
 
 /* IMAGE */
 .image-wrapper {
   position: relative;
+  width: 100%;
+  height: 220px;
+  overflow: hidden;
+  background: #eee;
 }
 
-.car-image {
+.image-wrapper img {
   width: 100%;
-  height: 190px;
+  height: 100%;
   object-fit: cover;
+  display: block;
 }
 
 .date-badge {
@@ -439,22 +449,20 @@ const goDetail = () => router.push("/admin/katalog");
   position: absolute;
   top: 12px;
   right: 12px;
-
   padding: 6px 10px;
   border-radius: 10px;
-
   font-size: 12px;
   font-weight: 700;
-
-  color: white;
 }
 
 .available {
+  color:white;
   background: #22c55e;
 }
 
 .sold {
-  background: #111;
+  color: black;
+  background: #ffffff;
 }
 
 /* CONTENT */
@@ -463,8 +471,10 @@ const goDetail = () => router.push("/admin/katalog");
 }
 
 .card-content h3 {
-  font-size: 20px;
-  color: #111;
+  font-size: 18px;
+  margin: 0;
+  min-height: 80px;
+  overflow: hidden;
 }
 
 .card-content h2 {
@@ -530,5 +540,41 @@ const goDetail = () => router.push("/admin/katalog");
 .edit-btn:hover,
 .detail-btn:hover {
   transform: translateY(-2px);
+}
+
+/* PAGINATION */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin: 10px 0 40px;
+  padding-top: 40px;
+}
+
+.pagination button {
+  border: none;
+  background: #d4af37;
+
+  color: white;
+
+  padding: 10px 18px;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+
+  transition: 0.2s;
+}
+
+.pagination button:hover {
+  opacity: 0.9;
+}
+
+.pagination button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 </style>

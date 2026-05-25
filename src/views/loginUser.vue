@@ -92,6 +92,7 @@ if (!name.value || !password.value) {
     confirmButtonColor: "#caa63a",
   });
   return;
+
 }
   await fetchLogin();
 };
@@ -115,10 +116,12 @@ const fetchLogin = async () => {
     });
     console.log(response.data);
     const token = response.data.data.access_token;
+    const role = response.data.data.role;
     localStorage.setItem("token", token);
+    localStorage.setItem("role", role);
     Swal.fire({
       icon: "success",
-      title: "Login Berhasil 🎉",
+      title: "Login Berhasil",
       text: "Selamat datang kembali",
       confirmButtonColor: "#caa63a",
       timer: 1800,
@@ -126,7 +129,11 @@ const fetchLogin = async () => {
     });
 
     setTimeout(() => {
-      router.push("/home");
+      if (role === "admin") {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/home");
+      }
     }, 1800);
   } catch (error) {
     Swal.fire({
@@ -142,11 +149,15 @@ const fetchLogin = async () => {
 <style scoped>
 /* BACKGROUND */
 .container {
-  height: 100vh;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
   background: #5a5a5a;
+  box-sizing: border-box;
 }
 
 /* CARD */

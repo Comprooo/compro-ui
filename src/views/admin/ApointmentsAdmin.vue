@@ -8,28 +8,32 @@
       <!-- TOPBAR -->
       <AdminTopbar title="Manajemen Appointments" />
 
+      <div v-if="loading">
+        Loading...
+      </div>
+
       <!-- CONTENT -->
       <div class="content">
         <!-- STATS -->
         <div class="stats">
           <div class="stat-card">
             <p>Jumlah Appointments</p>
-            <h2 class="gold">3</h2>
-          </div>
-
-          <div class="stat-card">
-            <p>Ditolak</p>
-            <h2 class="red">1</h2>
+            <h2 class="gold">{{ summary.total }}</h2>
           </div>
 
           <div class="stat-card">
             <p>Tertunda</p>
-            <h2 class="gray">1</h2>
+            <h2 class="gray">{{ summary.pending }}</h2>
           </div>
 
           <div class="stat-card">
             <p>Dikonfirmasi</p>
-            <h2 class="green">1</h2>
+            <h2 class="green">{{ summary.confirmed }}</h2>
+          </div>
+
+          <div class="stat-card">
+            <p>Ditolak</p>
+            <h2 class="red">{{ summary.cancelled }}</h2>
           </div>
         </div>
 
@@ -39,145 +43,158 @@
 
           <div class="search-box">
             <img src="/src/assets/admin/icon-search.svg" />
-            <input type="text" placeholder="Search" />
+            <input v-model="searchQuery" type="text" placeholder="Search" />
           </div>
         </div>
 
-        <!-- CARD 1 -->
-        <div class="appointment-card">
-          <div class="top-right confirmed">Dikonfirmasi</div>
-
-          <div class="left">
-            <img src="/src/assets/avanza.png" class="car-image" />
+        <!-- APPOINTMENT LIST -->
+        <div
+          class="appointment-card"
+          v-for="item in filteredAppointments"
+          :key="item.id"
+        >
+          <!-- STATUS -->
+          <div
+            class="top-right"
+            :class="{
+              confirmed: item.status === 'confirmed',
+              rejected: item.status === 'cancelled',
+              pending: item.status === 'pending',
+            }"
+          >
+            {{ item.status }}
           </div>
 
+          <!-- IMAGE -->
+          <div class="left">
+            <img
+              :src="item.car?.thumbnail"
+              class="car-image"
+            />
+          </div>
+
+          <!-- CONTENT -->
           <div class="middle">
-            <h3>Toyota Avanza</h3>
-            <h4>Nama : namamu</h4>
+            <h3>
+              {{ item.car?.brand }} {{ item.car?.model }}
+            </h3>
+
+            <h4>Nama : {{ item.user?.username }}</h4>
 
             <div class="info-grid">
               <div class="info-item">
                 <img src="/src/assets/admin/icon-calendar2.svg" />
-                <span>8 April 2026</span>
+                <span>{{ formatDate(item?.slot?.date) }}</span>
               </div>
 
               <div class="info-item">
-                <img src="/src/assets/admin/icon-calendar.svg" />
-                <span>09:00 WIB</span>
+                <img src="/src/assets/icon-jam.svg" />
+                <span>{{ (item?.slot?.time) }}</span>
               </div>
 
               <div class="info-item">
                 <img src="/src/assets/icon-callungu.png" />
-                <span>0812345678</span>
+                <span>{{ item.phone }}</span>
               </div>
 
               <div class="info-item">
                 <img src="/src/assets/icon-msghijau.png" />
-                <span>nama@gmai</span>
+                <span>{{ item.email }}</span>
               </div>
             </div>
           </div>
 
+          <!-- BUTTON -->
           <div class="right">
-            <button @click="goDetail">Lihat Detail Informasi</button>
+            <button @click="goDetail(item.id)">
+              Lihat Detail Informasi
+            </button>
           </div>
         </div>
-
-        <!-- CARD 2 -->
-        <div class="appointment-card">
-          <div class="top-right rejected">Ditolak</div>
-
-          <div class="left">
-            <img src="/src/assets/avanza.png" class="car-image" />
-          </div>
-
-          <div class="middle">
-            <h3>Toyota Avanza</h3>
-            <h4>Nama : yourname</h4>
-
-            <div class="info-grid">
-              <div class="info-item">
-                <img src="/src/assets/admin/icon-calendar2.svg" />
-                <span>11 April 2026</span>
-              </div>
-
-              <div class="info-item">
-                <img src="/src/assets/admin/icon-calendar.svg" />
-                <span>09:00 WIB</span>
-              </div>
-
-              <div class="info-item">
-                <img src="/src/assets/icon-callungu.png" />
-                <span>0812345678</span>
-              </div>
-
-              <div class="info-item">
-                <img src="/src/assets/icon-msghijau.png" />
-                <span>youw@gmail</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="right">
-            <button @click="goDetail">Lihat Detail Informasi</button>
-          </div>
-        </div>
-
-        <!-- CARD 3 -->
-        <div class="appointment-card">
-          <div class="top-right pending">Tertunda</div>
-
-          <div class="left">
-            <img src="/src/assets/civic.png" class="car-image" />
-          </div>
-
-          <div class="middle">
-            <h3>Honda Civic Type R</h3>
-            <h4>Nama : namakau</h4>
-
-            <div class="info-grid">
-              <div class="info-item">
-                <img src="/src/assets/admin/icon-calendar2.svg" />
-                <span>10 April 2026</span>
-              </div>
-
-              <div class="info-item">
-                <img src="/src/assets/admin/icon-calendar.svg" />
-                <span>16:00 WIB</span>
-              </div>
-
-              <div class="info-item">
-                <img src="/src/assets/icon-callungu.png" />
-                <span>0812345678</span>
-              </div>
-
-              <div class="info-item">
-                <img src="/src/assets/icon-msghijau.png" />
-                <span>namku@gme</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="right">
-            <button @click="goDetail">Lihat Detail Informasi</button>
-          </div>
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
+import axios from "axios";
 
 import AdminSidebar from "@/components/AdminSidebar.vue";
 import AdminTopbar from "@/components/AdminTopbar.vue";
 
 const router = useRouter();
+const appointments = ref([]);
+const summary = ref({
+  total: 0,
+  pending: 0,
+  confirmed: 0,
+  cancelled: 0,
+  completed: 0,
+});
 
-/* ROUTER */
-const goDetail = () => {
-  router.push("/admin/detailapo");
+const loading = ref(false);
+const searchQuery = ref("");
+const filteredAppointments = computed(() => {
+  return appointments.value.filter((item) => {
+    const keyword = searchQuery.value.toLowerCase();
+
+    return (
+      item.car?.brand?.toLowerCase().includes(keyword) ||
+      item.car?.model?.toLowerCase().includes(keyword) ||
+      item.email?.toLowerCase().includes(keyword) ||
+      item.phone?.toLowerCase().includes(keyword) ||
+      item.status?.toLowerCase().includes(keyword)
+    );
+  });
+});
+
+onMounted(() => {
+  fetchAppointments();
+});
+
+const fetchAppointments = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      "http://localhost:8000/api/v1/admin/schedules",
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    summary.value = res.data.data.summary;
+    appointments.value = res.data.data.appointments;
+    console.log(summary.value);
+    console.log(appointments.value);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const goDetail = (id) => {
+  router.push(`/admin/detailapo/${id}`);
+};
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const formatTime = (date) => {
+  return new Date(date).toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 </script>
 
@@ -340,14 +357,14 @@ const goDetail = () => {
 
 /* BUTTON */
 .right button {
+  margin-top: 80px;
+  height: 40px;
   background: #d4af37;
   border: none;
   padding: 12px 18px;
-  border-radius: 10px;
-
+  border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-
   transition: 0.2s;
 }
 

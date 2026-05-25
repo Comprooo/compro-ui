@@ -27,35 +27,68 @@
       <div class="section">
         <h3>Pilih Waktu Pertemuan</h3>
 
-        <div class="time-box">
-          <p class="time-label">MASUKKAN WAKTU</p>
+        <div class="time-section">
 
-          <div class="time-wrapper">
-            <!-- HOUR -->
-            <input
-              type="number"
-              min="0"
-              max="23"
-              v-model="hour"
-              class="time-input active"
-            />
+          <!-- START TIME -->
+          <div class="time-box">
+            <p class="time-label">MASUKKAN WAKTU AWAL</p>
 
-            <span class="colon">:</span>
+            <div class="time-wrapper">
+              <input
+                type="number"
+                min="0"
+                max="23"
+                v-model="startHour"
+                class="time-input active"
+              />
 
-            <!-- MINUTE -->
-            <input
-              type="number"
-              min="0"
-              max="59"
-              v-model="minute"
-              class="time-input"
-            />
+              <span class="colon">:</span>
+
+              <input
+                type="number"
+                min="0"
+                max="59"
+                v-model="startMinute"
+                class="time-input"
+              />
+            </div>
+
+            <div class="time-desc">
+              <span>Jam</span>
+              <span>Menit</span>
+            </div>
           </div>
 
-          <div class="time-desc">
-            <span>Hour</span>
-            <span>Minute</span>
+          <!-- END TIME -->
+          <div class="time-box">
+            <p class="time-label">MASUKKAN WAKTU AKHIR</p>
+
+            <div class="time-wrapper">
+              <input
+                type="number"
+                min="0"
+                max="23"
+                v-model="endHour"
+                class="time-input active"
+              />
+
+              <span class="colon">:</span>
+
+              <input
+                type="number"
+                min="0"
+                max="59"
+                v-model="endMinute"
+                class="time-input"
+              />
+            </div>
+
+            <div class="time-desc">
+              <span>Jam</span>
+              <span>Menit</span>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -63,7 +96,50 @@
       <div class="section">
         <h3>Lokasi Appointment</h3>
 
-        <input type="text" v-model="lokasi" class="lokasi-input" />
+        <div class="location-card">
+          <div class="input-group">
+            <label>Nama Lokasi</label>
+
+            <input
+              type="text"
+              v-model="locationName"
+              class="lokasi-input"
+              placeholder="Contoh: Showroom Utama Bandung"
+            />
+          </div>
+
+          <div class="input-group">
+            <label>Alamat Lengkap</label>
+
+            <textarea
+              v-model="address"
+              class="lokasi-textarea"
+              placeholder="Masukkan alamat lengkap lokasi"
+            ></textarea>
+          </div>
+
+          <div class="input-group">
+            <label>Google Maps Link</label>
+
+            <div class="map-wrapper">
+              <input
+                type="text"
+                v-model="mapLink"
+                class="lokasi-input"
+                placeholder="https://maps.google.com/..."
+              />
+
+              <a
+                v-if="mapLink"
+                :href="mapLink"
+                target="_blank"
+                class="map-preview-btn"
+              >
+                Buka Maps
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- BUTTON -->
@@ -73,42 +149,133 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import Swal from "sweetalert2";
+import axios from "axios";
 
 const router = useRouter();
+const route = useRoute();
 
+const slotId = route.params.id;
+
+// DATE
 const selectedDate = ref(new Date());
 
-const hour = ref("11");
-const minute = ref("00");
+// TIME
+const startHour = ref("00");
+const startMinute = ref("00");
 
-const lokasi = ref("Rumah Abang");
+const endHour = ref("00");
+const endMinute = ref("00");
+
+// LOCATION
+const locationId = ref(null);
+const locationName = ref("");
+const address = ref("");
+const mapLink = ref("");
 
 const goBack = () => {
   router.push("/admin/jadwal");
 };
 
-const updateJadwal = () => {
-  Swal.fire({
-    icon: "success",
-    title: "Jadwal berhasil diperbarui!",
-    text: "Data jadwal appointment berhasil disimpan.",
-    confirmButtonText: "Kembali",
-    confirmButtonColor: "#d4af37",
-    background: "#ffffff",
+onMounted(() => {
+  // ambil query dari halaman sebelumnya
+  const {
+    date,
+    time,
+    location_id,
+    location_name,
+    address: locationAddress,
+    map_link,
+  } = route.query;
 
-    customClass: {
-      popup: "custom-popup",
-      title: "custom-title",
-      htmlContainer: "custom-text",
-      confirmButton: "custom-button",
-      actions: "my-actions",
-    },
-  }).then(() => {
+  // DATE
+  if (date) {
+    selectedDate.value = new Date(date);
+  }
+
+  // TIME
+  if (time) {
+    const [start, end] = time.split(" - ");
+
+    const [sh, sm] = start.split(":");
+    const [eh, em] = end.split(":");
+
+    startHour.value = sh;
+    startMinute.value = sm;
+
+    endHour.value = eh;
+    endMinute.value = em;
+  }
+
+  // LOCATION
+  locationId.value = location_id || null;
+  locationName.value = location_name || "";
+  address.value = locationAddress || "";
+  mapLink.value = map_link || "";
+});
+
+const updateJadwal = async () => {
+  try {
+    const formattedDate = new Date(selectedDate.value)
+      .toISOString()
+      .split("T")[0];
+
+    const formattedStartTime =
+      `${String(startHour.value).padStart(2, "0")}:${String(
+        startMinute.value
+      ).padStart(2, "0")}`;
+
+    const formattedEndTime =
+      `${String(endHour.value).padStart(2, "0")}:${String(
+        endMinute.value
+      ).padStart(2, "0")}`;
+
+    // VALIDASI
+    if (formattedStartTime >= formattedEndTime) {
+      return Swal.fire({
+        icon: "warning",
+        title: "Waktu tidak valid",
+        text: "Waktu akhir harus lebih besar dari waktu awal.",
+      });
+    }
+
+    await axios.patch(
+      `http://localhost:8000/api/v1/admin/available-slots/${slotId}`,
+      {
+        location_id: String(locationId.value),
+        date: formattedDate,
+        time_start: formattedStartTime,
+        time_end: formattedEndTime,
+        quota: 1,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    await Swal.fire({
+      icon: "success",
+      title: "Jadwal berhasil diperbarui!",
+      text: "Data jadwal appointment berhasil disimpan.",
+      confirmButtonColor: "#d4af37",
+    });
+
     router.push("/admin/jadwal");
-  });
+
+  } catch (err) {
+    console.error(err.response?.data || err);
+    console.log(err.response.data)
+
+    Swal.fire({
+      icon: "error",
+      title: "Gagal update jadwal",
+      text: err.response?.data?.message || "Terjadi kesalahan",
+    });
+  }
 };
 </script>
 
@@ -229,6 +396,12 @@ const updateJadwal = () => {
 }
 
 /* TIME */
+.time-section {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+}
+
 .time-box {
   width: 320px;
 
@@ -295,9 +468,84 @@ const updateJadwal = () => {
   font-size: 14px;
 }
 
+/* LOCATION CARD */
+.location-card {
+  background: #fafafa;
+  border: 1px solid #ececec;
+  border-radius: 18px;
+
+  padding: 24px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-group label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.lokasi-textarea {
+  width: 95%;
+  min-height: 120px;
+
+  border: none;
+  outline: none;
+
+  background: white;
+
+  border-radius: 10px;
+
+  padding: 16px;
+
+  font-size: 16px;
+  font-family: "Segoe UI", sans-serif;
+
+  resize: none;
+
+  border: 1px solid #ddd;
+}
+
+/* MAP */
+.map-wrapper {
+  display: flex;
+  gap: 14px;
+}
+
+.map-preview-btn {
+  min-width: 140px;
+  height: 62px;
+
+  background: #00c853;
+  color: white;
+
+  border-radius: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  text-decoration: none;
+  font-weight: 600;
+
+  transition: 0.2s;
+}
+
+.map-preview-btn:hover {
+  background: #00b248;
+}
+
 /* INPUT */
 .lokasi-input {
-  width: 100%;
+  width: 95%;
   height: 62px;
 
   border: none;

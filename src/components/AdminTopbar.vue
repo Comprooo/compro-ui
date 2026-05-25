@@ -3,10 +3,6 @@
     <h1>{{ title }}</h1>
 
     <div class="top-actions">
-      <div class="notif-btn" @click="goNotif">
-        <img src="/src/assets/admin/icon-notif.svg" />
-      </div>
-
       <div class="profile-btn" @click="goProfile">
         <img src="/src/assets/logo-profile.png" />
       </div>
@@ -81,8 +77,8 @@ const goProfile = () => router.push("/admin/profileadmin");
 }
 
 .profile-btn img {
-  width: 28px;
-  height: 28px;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 </style>

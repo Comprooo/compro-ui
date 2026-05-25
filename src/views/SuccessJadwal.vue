@@ -1,11 +1,6 @@
 <template>
   <div class="page">
 
-    <!-- BACK -->
-    <div class="back">
-      ← Kembali ke Detail Mobil
-    </div>
-
     <!-- CARD MOBIL -->
     <div class="car-card">
       <img :src="data.car?.images?.[0]" />

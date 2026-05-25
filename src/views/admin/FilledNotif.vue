@@ -143,6 +143,9 @@ const deleteNotif = (name) => {
 
     customClass: {
       popup: "custom-popup",
+      title: "custom-title",
+      htmlContainer: "custom-html",
+      actions: "custom-actions",
       confirmButton: "confirm-btn",
       cancelButton: "cancel-btn",
     },
@@ -169,6 +172,9 @@ const deleteAllNotif = () => {
 
     customClass: {
       popup: "custom-popup",
+      title: "custom-title",
+      htmlContainer: "custom-html",
+      actions: "custom-actions",
       confirmButton: "confirm-btn",
       cancelButton: "cancel-btn",
     },
@@ -388,55 +394,46 @@ const deleteAllNotif = () => {
 /* SWEET ALERT */
 :global(.custom-popup) {
   border-radius: 14px !important;
-
   padding: 16px 18px 20px !important;
-
   font-family: "Segoe UI", sans-serif;
 }
 
-:global(.swal2-title) {
+/* TITLE */
+:global(.custom-title) {
   font-size: 18px !important;
   text-align: left !important;
-
   color: #111 !important;
-
   padding-bottom: 6px !important;
 }
 
-:global(.swal2-html-container) {
+/* TEXT */
+:global(.custom-html) {
   font-size: 14px !important;
   color: #777 !important;
-
   text-align: left !important;
-
   margin-top: 0 !important;
 }
 
-:global(.swal2-actions) {
+/* BUTTON WRAPPER */
+:global(.custom-actions) {
   width: 100%;
-
   justify-content: flex-end !important;
-
   gap: 10px;
 }
 
+/* CONFIRM */
 :global(.confirm-btn) {
   border-radius: 8px !important;
-
   padding: 10px 18px !important;
-
   font-weight: 600 !important;
-
   color: #111 !important;
 }
 
+/* CANCEL */
 :global(.cancel-btn) {
   border-radius: 8px !important;
-
   padding: 10px 18px !important;
-
   border: 1px solid #d9d9d9 !important;
-
   color: #111 !important;
 }
 </style>

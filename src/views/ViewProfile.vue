@@ -87,7 +87,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
-
+import Swal from "sweetalert2";
 const router = useRouter();
 
 const profile = ref({
@@ -119,8 +119,30 @@ const fetchProfile = async () => {
 };
 
 const handleLogout = async () => {
-  const confirmLogout = confirm("Yakin ingin logout?");
-  if (!confirmLogout) return;
+  const result = await Swal.fire({
+    title: "Yakin ingin logout?",
+    text: "Anda harus login kembali untuk masuk ke akun.",
+    icon: "warning",
+
+    showCancelButton: true,
+    confirmButtonText: "Ya, Logout",
+    cancelButtonText: "Batal",
+
+    confirmButtonColor: "#d9363e",
+    cancelButtonColor: "#caa63a",
+
+    reverseButtons: true,
+
+    customClass: {
+      popup: "logout-popup",
+      title: "logout-title",
+      htmlContainer: "logout-text",
+      confirmButton: "logout-confirm",
+      cancelButton: "logout-cancel",
+    }
+  });
+
+  if (!result.isConfirmed) return;
 
   try {
     const token = localStorage.getItem("token");
@@ -128,8 +150,16 @@ const handleLogout = async () => {
     await fetch("http://localhost:8000/api/v1/auth/logout", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${token}`,
-      }
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    await Swal.fire({
+      icon: "success",
+      title: "Berhasil Logout",
+      text: "Sampai jumpa kembali 👋",
+      timer: 1500,
+      showConfirmButton: false,
     });
 
   } catch (error) {
@@ -321,5 +351,32 @@ const goBack = () => {
   padding: 20px;
   border-radius: 12px;
   color: #a07a1f;
+}
+
+:global(.logout-popup) {
+  border-radius: 20px !important;
+  padding: 30px 24px !important;
+}
+
+:global(.logout-title) {
+  font-size: 28px !important;
+  font-weight: 700 !important;
+}
+
+:global(.logout-text) {
+  font-size: 16px !important;
+  color: #666 !important;
+}
+
+:global(.logout-confirm),
+:global(.logout-cancel) {
+  border-radius: 10px !important;
+  padding: 10px 30px !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+
+:global(.swal2-actions) {
+  gap: 14px !important;
 }
 </style>

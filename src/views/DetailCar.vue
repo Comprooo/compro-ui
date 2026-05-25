@@ -4,6 +4,8 @@
     <NavbarUser v-if="isLogin" />
     <NavbarLanding v-else />
     
+    <div class="back-btn" @click="goBack">← Kembali</div>
+
     <!-- LOADING -->
     <div v-if="loading" class="loading">
       Loading...
@@ -14,7 +16,7 @@
       <!-- LEFT -->
       <div class="left">
         <div class="image-wrapper">
-          <img :src="car.images?.[0] || carImage" />
+          <img :src="car.thumbnail || carImage" />
           <span class="badge" :class="car.status === 'Tersedia' ? 'green' : 'red'">
             {{ car.status }}
           </span>
@@ -86,7 +88,7 @@
     </div>
 
     <!-- CTA -->
-    <div class="cta">
+    <div v-if="car.status ==='Tersedia'" class="cta">
       <button @click="handleBooking">📅 Jadwalkan Pertemuan</button>
       <p>
         Buat jadwal untuk bertemu penjual dan cek kondisi mobil secara langsung
@@ -143,6 +145,10 @@ const formatPrice = (price) => {
 const handleBooking = () => {
   router.push(`/jadwal/${car.value.car_id}`);
 };
+
+const goBack = () => {
+  router.back();
+}
 </script>
 
 <style scoped>
@@ -151,6 +157,15 @@ const handleBooking = () => {
   background: #f5f5f5;
   min-height: 100vh;
   font-family: sans-serif;
+}
+
+.back-btn {
+  padding: 10px 22px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e7e7e7;
+  font-size: 18px;
+  color: #111;
+  cursor: pointer;
 }
 
 /* NAVBAR */
@@ -297,6 +312,7 @@ const handleBooking = () => {
 
 .cta p {
   margin-top: 10px;
+  padding-bottom: 20px;
   font-size: 12px;
   color: gray;
 }

@@ -1,7 +1,8 @@
 <template>
   <div class="page">
     <!-- NAVBAR (REPLACED) -->
-    <Navbar />
+    <Navbar v-if="isLogin" />
+    <NavbarLanding v-else />
 
     <!-- HEADER -->
     <div class="header">
@@ -28,74 +29,258 @@
         <!-- QUICK -->
         <div class="quick">
           <p>Pertanyaan cepat:</p>
+
           <div class="quick-list">
-            <button>Tampilkan semua mobil</button>
-            <button>Mobil apa aja yang available?</button>
-            <button>Cari SUV yang tersedia</button>
-            <button>Toyota dengan harga terjangkau</button>
+            <button
+              v-for="(item, index) in quickQuestions"
+              :key="index"
+              @click="sendMessage(item)"
+            >
+              {{ item }}
+            </button>
           </div>
         </div>
 
-        <!-- CHAT -->
+        <!-- CHAT AREA -->
         <div class="chat-area">
-          <!-- BOT -->
-          <div class="chat left">
-            <div class="bubble">
-              👋 Halo! Saya AI Assistant AutoKatalog.<br /><br />
-              Saya siap membantu Anda menemukan mobil impian!<br /><br />
-              Silakan tanya apa saja! 😊
-              <span>18.50</span>
-            </div>
-          </div>
 
-          <!-- USER -->
-          <div class="chat right">
-            <div class="bubble user">
-              Toyota dengan harga terjangkau
-              <span>18.50</span>
-            </div>
-          </div>
+          <template v-for="(chat, index) in chats" :key="index">
 
-          <!-- RESULT -->
-          <div class="result">
-            <div class="card">
-              <div class="image">
-                <img src="/src/assets/avanza.png" />
-                <span class="badge">Tersedia</span>
+            <!-- BOT -->
+            <div
+              class="chat"
+              :class="chat.type === 'bot' ? 'left' : 'right'"
+            >
+              <div
+                class="bubble"
+                :class="{ user: chat.type === 'user' }"
+              >
+                {{ chat.text }}
+
+                <span>{{ chat.time }}</span>
               </div>
+            </div>
 
-              <div class="content">
-                <h4>Toyota Avanza</h4>
-                <p class="price">Rp 250.000.000</p>
+            <!-- DATA MOBIL DARI BE -->
+            <div
+              v-if="chat.type === 'bot' && chat.cars && chat.cars.length"
+              class="result-list"
+            >
+              <div
+                v-for="car in chat.cars"
+                :key="car.car_id"
+                class="car-card"
+              >
+                <div class="car-image">
+                  <img :src="car.thumbnail" :alt="`${car.brand} ${car.model}`" />
 
-                <div class="info">
-                  <span>2022</span>
-                  <span>20.000 km</span>
-                  <span>Automatic</span>
-                  <span>Bensin</span>
+                  <span
+                    class="status-badge"
+                    :class="{ sold: car.status === 'Terjual' }"
+                  >
+                    {{ car.status }}
+                  </span>
                 </div>
 
-                <button>Lihat Detail</button>
+                <div class="car-content">
+                  <h3>{{ car.brand }} {{ car.model }}</h3>
+
+                  <p class="price">
+                    Rp {{ formatRupiah(car.price) }}
+                  </p>
+
+                  <div class="car-info">
+                    <span>{{ car.specifications?.year }}</span>
+                    <span>{{ car.specifications?.transmission }}</span>
+                    <span>{{ car.specifications?.mileage }}</span>
+                    <span>{{ car.specifications?.fuel }}</span>
+                    <span>{{ car.specifications?.type }}</span>
+                  </div>
+
+                  <p class="desc">
+                    {{ car.description }}
+                  </p>
+
+                  <button
+                    class="detail-btn"
+                    @click="goDetailCar(car.car_id)"
+                  >
+                    Lihat Detail
+                  </button>
+                </div>
               </div>
             </div>
+
+            <!-- DATA SLOT DARI BE -->
+            <div
+              v-if="chat.type === 'bot' && chat.slots && chat.slots.length"
+              class="slot-list"
+            >
+              <div
+                v-for="(slot, slotIndex) in chat.slots"
+                :key="slotIndex"
+                class="slot-card"
+              >
+                {{ slot }}
+              </div>
+            </div>
+
+          </template>
+
+          <!-- LOADING -->
+          <div v-if="loading" class="chat left">
+            <div class="bubble">
+              AI sedang mengetik...
+            </div>
           </div>
+
         </div>
+
       </div>
     </div>
 
     <!-- INPUT -->
     <div class="input-area">
       <div class="input-box">
-        <input placeholder="Tanyakan apa saja" />
-        <div class="icons">📷 🎤</div>
-        <button>➤</button>
+
+        <input
+          v-model="message"
+          type="text"
+          placeholder="Tanyakan apa saja"
+          @keydown.enter.prevent="sendMessage()"
+        />
+
+        <button @click="sendMessage">
+          ➤
+        </button>
+
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref,onMounted } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
 import Navbar from "@/components/Navbar.vue";
+import NavbarLanding from "@/components/NavbarLanding.vue"
+
+const router = useRouter();
+const isLogin = ref(false);
+const message = ref("");
+const loading = ref(false);
+const sessionId = ref(null);
+
+
+const chats = ref([
+  {
+    type: "bot",
+    text: `👋 Halo! Saya AI Assistant AutoKatalog.
+
+Saya siap membantu Anda menemukan mobil impian!
+
+Silakan tanya apa saja! 😊`,
+    time: getCurrentTime(),
+  },
+]);
+
+function getCurrentTime() {
+  return new Date().toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+const formatRupiah = (value) => {
+  return new Intl.NumberFormat("id-ID").format(value);
+};
+
+const goDetailCar = (carId) => {
+  router.push(`/detail/${carId}`);
+};
+
+const quickQuestions = [
+  "Tampilkan semua mobil",
+  "Mobil apa aja yang available?",
+  "Cari SUV yang tersedia",
+  "Toyota dengan harga terjangkau",
+];
+
+onMounted(() => {
+  isLogin.value = !!localStorage.getItem("token");
+});
+
+const sendMessage = async (customMessage = null) => {
+  const text = customMessage || message.value;
+
+  if (!text || !text.trim()) return;
+
+  // push user chat
+  chats.value.push({
+    type: "user",
+    text,
+    time: getCurrentTime(),
+  });
+
+  // kosongkan input
+  message.value = "";
+
+  try {
+    loading.value = true;
+
+    // body request
+    const payload = {
+      message: text,
+    };
+
+    // hanya kirim session_id kalau ada
+    if (sessionId.value) {
+      payload.session_id = sessionId.value;
+    }
+
+    const response = await axios.post(
+      "http://localhost:8000/api/v1/chat",
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    console.log("AI RESPONSE:", response.data);
+
+  // balasan AI
+  const aiData = response.data.data;
+
+  sessionId.value = aiData.session_id;
+
+  chats.value.push({
+    type: "bot",
+    text: aiData.reply || "Tidak ada respon AI",
+    cars: aiData.car_recommendations || [],
+    slots: aiData.available_slots || [],
+    time: getCurrentTime(),
+  });
+
+  } catch (error) {
+    console.log("FULL ERROR:", error);
+    console.log("ERROR RESPONSE:", error.response);
+
+    chats.value.push({
+      type: "bot",
+      text:
+        error.response?.data?.message ||
+        "Maaf terjadi kesalahan saat mengambil data AI",
+      time: getCurrentTime(),
+    });
+
+  } finally {
+    loading.value = false;
+  }
+};
 </script>
 
 <style scoped>
@@ -187,6 +372,22 @@ import Navbar from "@/components/Navbar.vue";
 /* CHAT AREA */
 .chat-area {
   margin-top: 25px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.chat-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-area::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+
+.bubble {
+  white-space: pre-line;
 }
 
 .chat {
@@ -320,5 +521,148 @@ button {
   border-radius: 50%;
   width: 42px;
   height: 42px;
+}
+
+/* RESULT LIST */
+.result-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  margin: 10px 0 25px 0;
+  padding-left: 0;
+  align-items: stretch;
+}
+
+/* CAR CARD */
+.car-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.car-image {
+  position: relative;
+  height: 180px;
+  background: #f1f1f1;
+  flex-shrink: 0;
+}
+
+.car-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.status-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #22c55e;
+  color: white;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-badge.sold {
+  background: #ef4444;
+}
+
+.car-content {
+  padding: 16px;
+
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.car-content h3 {
+  margin: 0 0 8px;
+  color: #1f2937;
+  font-size: 17px;
+  font-weight: 700;
+
+  min-height: 44px;
+}
+
+.price {
+  color: #caa63a;
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+
+.car-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+
+  min-height: 58px;
+}
+
+.car-info span {
+  background: #f3f4f6;
+  color: #4b5563;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.desc {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  min-height: 58px;
+}
+
+.detail-btn {
+  width: 100%;
+  background: #caa63a;
+  color: white;
+  border: none;
+  padding: 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+
+  margin-top: auto;
+}
+
+.detail-btn:hover {
+  opacity: 0.9;
+}
+
+/* SLOT */
+.slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 10px 0 25px;
+}
+
+.slot-card {
+  background: #fff7db;
+  color: #92400e;
+  border: 1px solid #e5c96b;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
 }
 </style>

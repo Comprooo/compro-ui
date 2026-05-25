@@ -9,10 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "axios": "^1.16.1",
+    "calendar": "^0.1.1",
     "sweetalert2": "^11.26.24",
     "v-calendar": "^3.1.2",
     "vue": "^3.5.32",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "vue-select": "^4.0.0-beta.6"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.6",

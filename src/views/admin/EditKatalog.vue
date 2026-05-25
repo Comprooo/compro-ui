@@ -1,17 +1,25 @@
 <script setup>
 import Swal from "sweetalert2";
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
 
 const router = useRouter();
+const route = useRoute();
 
-const goBack = () => {
-  router.push("/admin/katalog");
-};
-
+const loading = ref(false);
 const selectedStatus = ref("tersedia");
 
-/* IMAGE UPLOAD */
+/* =========================
+   ROUTING
+========================= */
+const goBack = () => {
+  router.back();
+};
+
+/* =========================
+   IMAGE UPLOAD
+========================= */
 const imagePreview = ref("/src/assets/civic.png");
 const fileInput = ref(null);
 
@@ -19,28 +27,134 @@ const openExplorer = () => {
   fileInput.value.click();
 };
 
-const handleImageUpload = (event) => {
+const uploadedImage = ref("");
+
+const handleImageUpload = async (event) => {
   const file = event.target.files[0];
 
-  if (file) {
+  if (!file) return;
+
+  try {
     imagePreview.value = URL.createObjectURL(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await axios.post(
+      "http://localhost:8000/api/v1/upload/image",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    // ambil url hasil upload
+    uploadedImage.value =
+      res.data.data.url ||
+      res.data.data.image_url ||
+      Object.values(res.data.data)[0];
+
+    Swal.fire({
+      icon: "success",
+      title: "Upload berhasil",
+      text: "Gambar berhasil diupload",
+      confirmButtonColor: "#00c853",
+    });
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Upload gagal",
+      text: "Gagal upload gambar",
+      confirmButtonColor: "#ff1e1e",
+    });
   }
 };
 
+/* =========================
+   FORM
+========================= */
 const form = ref({
-  nama: "Honda Civic Type R",
-  harga: "950.000.000",
-  tahun: "2023",
-  km: "3.000 Km",
-  transmisi: "Manual",
-  bensin: "Bensin",
-  warna: "Silver",
-  tipe: "Sedan",
+  brand: "",
+  model: "",
+  price: 0,
+  condition: "",
+
+  tahun: "",
+  km: "",
+  transmisi: "",
+  bensin: "",
+  warna: "",
+  tipe: "",
+
   deskripsi: "",
   fitur: "",
 });
 
-/* EDIT FEATURE */
+/* =========================
+   FETCH DETAIL MOBIL
+========================= */
+const fetchCarDetail = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      `http://localhost:8000/api/v1/cars/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    const car = res.data.data;
+
+    form.value = {
+      brand: car.brand || "",
+      model: car.model || "",
+      price: car.price || 0,
+      condition: car.condition || "",
+
+      tahun: car.specifications?.year || "",
+      km: car.specifications?.mileage || "",
+      transmisi: car.specifications?.transmission || "",
+      bensin: car.specifications?.fuel || "",
+      warna: car.specifications?.color || "",
+      tipe: car.specifications?.type || "",
+
+      deskripsi: car.description || "",
+      fitur: car.features?.join(", ") || "",
+    };
+
+    selectedStatus.value = car.status?.toLowerCase() || "tersedia";
+
+    imagePreview.value = car.thumbnail || "/src/assets/civic.png";
+    uploadedImage.value = car.thumbnail || "";
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Gagal",
+      text: "Gagal mengambil detail mobil",
+      confirmButtonColor: "#ff1e1e",
+    });
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchCarDetail();
+});
+
+/* =========================
+   EDIT FEATURE
+========================= */
 const editFeature = async (key, label) => {
   const result = await Swal.fire({
     title: `Edit ${label}`,
@@ -57,46 +171,16 @@ const editFeature = async (key, label) => {
   }
 };
 
-/* UPDATE */
+/* =========================
+   UPDATE
+========================= */
 const updateCatalog = async () => {
-  if (selectedStatus.value === "terjual") {
-    const result = await Swal.fire({
-      title:
-        "Katalog anda dalam status 'Terjual' apakah anda yakin ingin perbarui katalog?",
-      text: "Jika anda teruskan, anda tidak dapat perbarui katalog anda",
-      background: "#fff",
-      confirmButtonText: "Ya, Perbarui Katalog",
-      showCancelButton: true,
-      cancelButtonText: "Lain Kali",
-      reverseButtons: true,
-
-      customClass: {
-        popup: "custom-popup",
-        title: "custom-title",
-        confirmButton: "green-btn",
-        cancelButton: "red-btn",
-      },
-    });
-
-    if (result.isConfirmed) {
-      await Swal.fire({
-        title: "Katalog berhasil diperbarui",
-        icon: "success",
-        confirmButtonColor: "#00c853",
-      });
-
-      router.push("/admin/katalog");
-    }
-
-    return;
-  }
-
   const result = await Swal.fire({
     title: "Anda yakin ingin perbarui katalog?",
     background: "#fff",
-    confirmButtonText: "Ya, Perbarui Katalog",
+    confirmButtonText: "Ya, Perbarui",
     showCancelButton: true,
-    cancelButtonText: "Lain Kali",
+    cancelButtonText: "Batal",
     reverseButtons: true,
 
     customClass: {
@@ -107,25 +191,86 @@ const updateCatalog = async () => {
     },
   });
 
-  if (result.isConfirmed) {
+  if (!result.isConfirmed) return;
+
+  try {
+    await axios.put(
+      `http://localhost:8000/api/v1/admin/cars/${route.params.id}`,
+      {
+        brand: form.value.brand,
+        model: form.value.model,
+        price: Number(
+          String(form.value.price).replace(/\./g, "")
+        ),
+
+        condition: form.value.condition,
+
+        specifications: {
+          year: Number(form.value.tahun),
+          transmission: form.value.transmisi,
+          color: form.value.warna,
+          mileage: form.value.km,
+          fuel: form.value.bensin,
+          type: form.value.tipe,
+        },
+
+        features: form.value.fitur
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item),
+
+        images: uploadedImage.value
+          ? [uploadedImage.value]
+          : [],
+
+        description: form.value.deskripsi,
+
+        status:
+          selectedStatus.value === "tersedia"
+            ? "Tersedia"
+            : "Terjual",
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
     await Swal.fire({
-      title: "Katalog berhasil diperbarui",
+      title: "Berhasil",
+      text: "Katalog berhasil diperbarui",
       icon: "success",
-      confirmButtonColor: "#00c853",
+      showConfirmButton: false,
+      timer: 1800,
     });
 
-    router.push("/admin/katalog");
+      setTimeout(() =>{
+      router.push("/admin/katalog");
+    },1000);
+
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      title: "Gagal",
+      text: "Gagal memperbarui katalog",
+      icon: "error",
+      confirmButtonColor: "#ff1e1e",
+    });
   }
 };
 
-/* DELETE */
+/* =========================
+   DELETE
+========================= */
 const deleteCatalog = async () => {
   const result = await Swal.fire({
     title: "Anda yakin ingin menghapus katalog?",
     background: "#fff",
-    confirmButtonText: "Ya, Hapus Katalog",
+    confirmButtonText: "Ya, Hapus",
     showCancelButton: true,
-    cancelButtonText: "Lain Kali",
+    cancelButtonText: "Batal",
     reverseButtons: true,
 
     customClass: {
@@ -136,14 +281,39 @@ const deleteCatalog = async () => {
     },
   });
 
-  if (result.isConfirmed) {
+  if (!result.isConfirmed) return;
+
+  try {
+    await axios.delete(
+      `http://localhost:8000/api/v1/admin/cars/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
     await Swal.fire({
-      title: "Katalog berhasil dihapus",
+      title: "Berhasil",
+      text: "Katalog berhasil dihapus",
       icon: "success",
-      confirmButtonColor: "#00c853",
+      showConfirmButton: false,
+      timer:1800,
     });
 
-    router.push("/admin/katalog");
+    setTimeout(() =>{
+      router.push("/admin/katalog");
+    },1800);  
+  
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      title: "Gagal",
+      text: "Gagal menghapus katalog",
+      icon: "error",
+      confirmButtonColor: "#ff1e1e",
+    });
   }
 };
 </script>
@@ -173,16 +343,22 @@ const deleteCatalog = async () => {
       <div class="form-card">
         <!-- NAMA -->
         <div class="form-group">
-          <label>Nama Kendaraan</label>
+          <label>Brand</label>
 
-          <input type="text" v-model="form.nama" />
+          <input type="text" v-model="form.brand" />
+        </div>
+
+        <div class="form-group">
+          <label>Model</label>
+
+          <input type="text" v-model="form.model" />
         </div>
 
         <!-- HARGA -->
         <div class="form-group">
           <label>Harga Kendaraan</label>
 
-          <input type="text" v-model="form.harga" />
+          <input type="number" v-model="form.price" />
         </div>
 
         <!-- SPESIFIKASI -->
@@ -291,25 +467,54 @@ const deleteCatalog = async () => {
         </div>
 
         <!-- DESKRIPSI -->
-        <div class="form-group">
-          <label>Deskripsi</label>
+        <div class="modern-group">
+          <div class="modern-label">
+            <h4>Deskripsi Mobil</h4>
+            <p>
+              Tambahkan penjelasan singkat mengenai kondisi dan keunggulan mobil
+            </p>
+          </div>
 
           <textarea
-            class="fixed-textarea"
-            placeholder="Tambahkan deskripsi mobil"
             v-model="form.deskripsi"
+            class="modern-textarea"
+            placeholder="Contoh:
+        Mobil kondisi sangat baik, service rutin, pajak hidup, cocok untuk keluarga..."
           ></textarea>
         </div>
 
         <!-- FITUR -->
-        <div class="form-group">
-          <label>Fitur</label>
+        <div class="modern-group">
+          <div class="modern-label">
+            <h4>Fitur Mobil</h4>
+            <p>
+              Pisahkan fitur menggunakan tanda koma (,)
+            </p>
+          </div>
 
           <textarea
-            class="fixed-textarea"
-            placeholder="Tambahkan fitur mobil"
             v-model="form.fitur"
+            class="modern-textarea small"
+            placeholder="Contoh:
+        Sunroof, Camera 360, Cruise Control, ABS, Airbags"
           ></textarea>
+
+          <!-- PREVIEW FITUR -->
+          <div
+            v-if="form.fitur"
+            class="feature-preview"
+          >
+            <span
+              v-for="(item, index) in form.fitur
+                .split(',')
+                .map(f => f.trim())
+                .filter(f => f)"
+              :key="index"
+              class="feature-chip"
+            >
+              {{ item }}
+            </span>
+          </div>
         </div>
 
         <!-- STATUS -->
@@ -442,6 +647,89 @@ textarea {
 .fixed-textarea {
   height: 140px;
   resize: none;
+}
+
+/* MODERN INPUT GROUP */
+.modern-group {
+  margin-top: 24px;
+
+  background: white;
+
+  border-radius: 18px;
+
+  padding: 22px;
+
+  border: 1px solid #ececec;
+}
+
+/* LABEL */
+.modern-label h4 {
+  font-size: 18px;
+  font-weight: 700;
+
+  color: #111;
+
+  margin-bottom: 6px;
+}
+
+.modern-label p {
+  font-size: 14px;
+  color: #777;
+
+  margin-bottom: 16px;
+}
+
+/* TEXTAREA */
+.modern-textarea {
+  width: 100%;
+  min-height: 140px;
+
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+
+  background: #fafafa;
+
+  padding: 16px;
+
+  font-size: 15px;
+  line-height: 1.7;
+
+  resize: none;
+
+  transition: 0.2s;
+}
+
+.modern-textarea.small {
+  min-height: 100px;
+}
+
+.modern-textarea:focus {
+  border-color: #d4af37;
+  background: white;
+
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+}
+
+/* FEATURE PREVIEW */
+.feature-preview {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-top: 18px;
+}
+
+.feature-chip {
+  background: #f4efe0;
+  color: #9b7b16;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
 }
 
 /* SPEC */
@@ -605,4 +893,6 @@ textarea {
 
   width: 100% !important;
 }
+
+
 </style>

@@ -2,16 +2,102 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
+import axios from "axios";
 
 const router = useRouter();
 
-/* ROUTER */
+/* =========================
+   ROUTER
+========================= */
 const goBack = () => {
-  router.push("/admin/katalog");
+  router.back();
 };
 
+/* =========================
+   IMAGE
+========================= */
+const fileInput = ref(null);
+
+const previewImage = ref("");
+const uploadedImage = ref("");
+
+const chooseImage = () => {
+  fileInput.value.click();
+};
+
+const handleUpload = async (event) => {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  try {
+    previewImage.value = URL.createObjectURL(file);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await axios.post(
+      "http://localhost:8000/api/v1/upload/image",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    uploadedImage.value =
+      res.data.data.url ||
+      res.data.data.image_url ||
+      Object.values(res.data.data)[0];
+
+    Swal.fire({
+      icon: "success",
+      title: "Upload berhasil",
+      text: "Gambar berhasil diupload",
+      confirmButtonColor: "#00c853",
+    });
+  } catch (err) {
+    console.error(err);
+    console.log(err.response?.data);
+    console.log(err.response?.status);
+
+    Swal.fire({
+      icon: "error",
+      title: "Upload gagal",
+      text: "Gagal upload gambar",
+      confirmButtonColor: "#ff1e1e",
+    });
+  }
+};
+
+/* =========================
+   FORM
+========================= */
+const form = ref({
+  brand: "",
+  model: "",
+  price: "",
+
+  year: "",
+  mileage: "",
+  transmission: "",
+  fuel: "",
+  color: "",
+  type: "",
+
+  deskripsi: "",
+  fitur: "",
+});
+
+const selectedStatus = ref("Tersedia");
+
+/* =========================
+   ADD KATALOG
+========================= */
 const goUpload = async () => {
-  if (!previewImage.value) {
+  if (!uploadedImage.value) {
     Swal.fire({
       icon: "warning",
       title: "Upload gambar terlebih dahulu",
@@ -21,45 +107,83 @@ const goUpload = async () => {
     return;
   }
 
-  await Swal.fire({
-    icon: "success",
-    title: "Katalog berhasil diunggah",
+  const result = await Swal.fire({
+    title: "Unggah katalog mobil?",
+    text: "Pastikan data mobil sudah benar",
+    icon: "question",
+
+    showCancelButton: true,
+
+    confirmButtonText: "Ya, Unggah",
+    cancelButtonText: "Batal",
+
     confirmButtonColor: "#00c853",
+    cancelButtonColor: "#ff1e1e",
   });
 
-  router.push("/admin/successkatalog");
-};
+  if (!result.isConfirmed) return;
 
-/* IMAGE */
-const fileInput = ref(null);
+  try {
+    await axios.post(
+      "http://localhost:8000/api/v1/admin/cars",
+      {
+        brand: form.value.brand,
+        model: form.value.model,
 
-const previewImage = ref("");
+        price: Number(
+          String(form.value.price).replace(/\./g, "")
+        ),
 
-const chooseImage = () => {
-  fileInput.value.click();
-};
+        condition: "",
 
-const handleUpload = (event) => {
-  const file = event.target.files[0];
+        specifications: {
+          year: Number(form.value.year),
+          transmission: form.value.transmission,
+          color: form.value.color,
+          mileage: form.value.mileage,
+          fuel: form.value.fuel,
+          type: form.value.type,
+        },
 
-  if (file) {
-    previewImage.value = URL.createObjectURL(file);
+        features: form.value.fitur
+          .split(",")
+          .map((item) => item.trim())
+          .filter((item) => item),
+
+        images: [uploadedImage.value],
+
+        description: form.value.deskripsi,
+
+        status: selectedStatus.value,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    await Swal.fire({
+      icon: "success",
+      title: "Berhasil",
+      text: "Katalog berhasil ditambahkan",
+      confirmButtonColor: "#00c853",
+    });
+
+    router.push("/admin/katalog");
+  } catch (err) {
+    console.error(err);
+    console.log(err.response?.data);
+    console.log(err.response?.status);
+
+    Swal.fire({
+      icon: "error",
+      title: "Gagal",
+      text: "Gagal menambahkan katalog",
+      confirmButtonColor: "#ff1e1e",
+    });
   }
 };
-
-/* FORM */
-const form = ref({
-  nama: "",
-  harga: "",
-  tahun: "",
-  kilometer: "",
-  transmisi: "",
-  bahanBakar: "",
-  warna: "",
-  tipe: "",
-  deskripsi: "",
-  fitur: "",
-});
 </script>
 
 <template>
@@ -102,7 +226,17 @@ const form = ref({
           <input
             type="text"
             placeholder="Masukkan nama kendaraan"
-            v-model="form.nama"
+            v-model="form.brand"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Model Kendaraan</label>
+
+          <input
+            type="text"
+            placeholder="Masukkan model kendaraan"
+            v-model="form.model"
           />
         </div>
 
@@ -113,7 +247,7 @@ const form = ref({
           <input
             type="text"
             placeholder="Masukkan harga kendaraan"
-            v-model="form.harga"
+            v-model="form.price"
           />
         </div>
 
@@ -134,7 +268,7 @@ const form = ref({
                 <div class="spec-content">
                   <span>Tahun</span>
 
-                  <input v-model="form.tahun" />
+                  <input v-model="form.year" />
                 </div>
               </div>
 
@@ -144,7 +278,7 @@ const form = ref({
                 <div class="spec-content">
                   <span>Transmisi</span>
 
-                  <input v-model="form.transmisi" />
+                  <input v-model="form.transmission" />
                 </div>
               </div>
 
@@ -154,7 +288,7 @@ const form = ref({
                 <div class="spec-content">
                   <span>Warna</span>
 
-                  <input v-model="form.warna" />
+                  <input v-model="form.color" />
                 </div>
               </div>
             </div>
@@ -167,7 +301,7 @@ const form = ref({
                 <div class="spec-content">
                   <span>Kilometer</span>
 
-                  <input v-model="form.kilometer" />
+                  <input v-model="form.mileage" />
                 </div>
               </div>
 
@@ -177,7 +311,7 @@ const form = ref({
                 <div class="spec-content">
                   <span>Bahan Bakar</span>
 
-                  <input v-model="form.bahanBakar" />
+                  <input v-model="form.fuel" />
                 </div>
               </div>
 
@@ -187,7 +321,7 @@ const form = ref({
                 <div class="spec-content">
                   <span>Tipe</span>
 
-                  <input v-model="form.tipe" />
+                  <input v-model="form.type" />
                 </div>
               </div>
             </div>
@@ -195,23 +329,56 @@ const form = ref({
         </div>
 
         <!-- DESKRIPSI -->
-        <div class="form-group">
-          <label>Deskripsi</label>
+        <div class="modern-group">
+          <div class="modern-label">
+            <h4>Deskripsi Mobil</h4>
+
+            <p>
+              Tambahkan penjelasan singkat mengenai kondisi dan keunggulan mobil
+            </p>
+          </div>
 
           <textarea
-            placeholder="Tambahkan deskripsi mobil"
             v-model="form.deskripsi"
+            class="modern-textarea"
+            placeholder="Contoh:
+        Mobil kondisi sangat baik, service rutin, pajak hidup, cocok untuk keluarga..."
           ></textarea>
         </div>
 
         <!-- FITUR -->
-        <div class="form-group">
-          <label>Fitur</label>
+        <div class="modern-group">
+          <div class="modern-label">
+            <h4>Fitur Mobil</h4>
+
+            <p>
+              Pisahkan fitur menggunakan tanda koma (,)
+            </p>
+          </div>
 
           <textarea
-            placeholder="Tambahkan fitur mobil"
             v-model="form.fitur"
+            class="modern-textarea small"
+            placeholder="Contoh:
+        Sunroof, Camera 360, Cruise Control, ABS, Airbags"
           ></textarea>
+
+          <!-- PREVIEW -->
+          <div
+            v-if="form.fitur"
+            class="feature-preview"
+          >
+            <span
+              v-for="(item, index) in form.fitur
+                .split(',')
+                .map(f => f.trim())
+                .filter(f => f)"
+              :key="index"
+              class="feature-chip"
+            >
+              {{ item }}
+            </span>
+          </div>
         </div>
 
         <!-- BUTTON -->
@@ -441,5 +608,88 @@ textarea {
 
 .upload-btn:hover {
   opacity: 0.92;
+}
+
+/* MODERN GROUP */
+.modern-group {
+  margin-top: 24px;
+
+  background: white;
+
+  border-radius: 18px;
+
+  padding: 22px;
+
+  border: 1px solid #ececec;
+}
+
+/* LABEL */
+.modern-label h4 {
+  font-size: 18px;
+  font-weight: 700;
+
+  color: #111;
+
+  margin-bottom: 6px;
+}
+
+.modern-label p {
+  font-size: 14px;
+  color: #777;
+
+  margin-bottom: 16px;
+}
+
+/* TEXTAREA */
+.modern-textarea {
+  width: 100%;
+  min-height: 140px;
+
+  border: 1px solid #e5e5e5;
+  border-radius: 14px;
+
+  background: #fafafa;
+
+  padding: 16px;
+
+  font-size: 15px;
+  line-height: 1.7;
+
+  resize: none;
+
+  transition: 0.2s;
+}
+
+.modern-textarea.small {
+  min-height: 100px;
+}
+
+.modern-textarea:focus {
+  border-color: #d4af37;
+  background: white;
+
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+}
+
+/* FEATURE PREVIEW */
+.feature-preview {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  margin-top: 18px;
+}
+
+.feature-chip {
+  background: #f4efe0;
+  color: #9b7b16;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  font-size: 13px;
+  font-weight: 600;
 }
 </style>

@@ -1,20 +1,27 @@
 <template>
   <div class="page">
     <!-- BACK -->
-    <div class="back-btn" @click="goBack">← Kembali ke Daftar Katalog</div>
+    <div class="back-btn" @click="goBack">← Back</div>
+
+    <div v-if="loading" class="loading">
+      Loading...
+    </div>
 
     <!-- CONTENT -->
-    <div class="content">
+    <div v-else class="content">
       <!-- LEFT -->
       <div class="left">
         <div class="image-wrapper">
-          <img src="/src/assets/avanza.png" class="car-image" />
+          <img
+            :src="car.thumbnail || '/default-car.png'"
+            class="car-image"
+          />
 
-          <div class="status-badge">Terjual</div>
+          <div class="status-badge">{{car.status}}</div>
         </div>
 
-        <h1>Toyota Avanza</h1>
-        <h2>Rp 250.000.000</h2>
+        <h1>{{car?.specifications?.year}} {{car.brand}} {{car.model}} {{ car?.specifications?.transmission }}</h1>
+        <h2>Rp {{ formatPrice(car.price) }}</h2>
       </div>
 
       <!-- RIGHT -->
@@ -27,7 +34,7 @@
 
             <div class="spec-info">
               <p>Tahun</p>
-              <h4>2022</h4>
+              <h4>{{car?.specifications?.year}}</h4>
             </div>
           </div>
 
@@ -37,7 +44,7 @@
 
             <div class="spec-info">
               <p>Kilometer</p>
-              <h4>20.000 km</h4>
+              <h4>{{car?.specifications?.mileage}}</h4>
             </div>
           </div>
 
@@ -47,7 +54,7 @@
 
             <div class="spec-info">
               <p>Transmisi</p>
-              <h4>Automatic</h4>
+              <h4>{{car?.specifications?.transmission}}</h4>
             </div>
           </div>
 
@@ -57,7 +64,7 @@
 
             <div class="spec-info">
               <p>Bahan Bakar</p>
-              <h4>Bensin</h4>
+              <h4>{{car?.specifications?.fuel}}</h4>
             </div>
           </div>
 
@@ -67,7 +74,7 @@
 
             <div class="spec-info">
               <p>Warna</p>
-              <h4>Grey</h4>
+              <h4>{{car?.specifications?.color}}</h4>
             </div>
           </div>
 
@@ -77,7 +84,7 @@
 
             <div class="spec-info">
               <p>Tipe</p>
-              <h4>MPV</h4>
+              <h4>{{car?.specifications?.type}}</h4>
             </div>
           </div>
         </div>
@@ -87,8 +94,7 @@
           <h3>Deskripsi</h3>
 
           <p class="desc">
-            Toyota Avanza 2022 cocok untuk keluarga, irit BBM, service record
-            lengkap
+            {{car.description}}
           </p>
         </div>
 
@@ -97,29 +103,13 @@
           <h3>Fitur</h3>
 
           <div class="feature-grid">
-            <div class="feature">
+            <div
+              class="feature"
+              v-for="(feature, index) in car.features"
+              :key="index"
+            >
               <img src="/src/assets/icon-check2.svg" />
-              <span>7 Seats</span>
-            </div>
-
-            <div class="feature">
-              <img src="/src/assets/icon-check2.svg" />
-              <span>Dual Airbags</span>
-            </div>
-
-            <div class="feature">
-              <img src="/src/assets/icon-check2.svg" />
-              <span>ABS</span>
-            </div>
-
-            <div class="feature">
-              <img src="/src/assets/icon-check2.svg" />
-              <span>Touchscreen Audio</span>
-            </div>
-
-            <div class="feature">
-              <img src="/src/assets/icon-check2.svg" />
-              <span>Rear Camera</span>
+              <span>{{ feature }}</span>
             </div>
           </div>
         </div>
@@ -127,17 +117,74 @@
     </div>
 
     <!-- FOOTER -->
-    <div class="footer-info">Mobil terjual pada tanggal 27 November 2025</div>
+    <div 
+      v-if="car.status !== 'Tersedia' 
+      "class="footer-info"
+      >
+      Mobil Terjual Pada {{ formatDate(car.sold_at) }}
+    </div>
   </div>
 </template>
 
 <script setup>
-import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
 
 const router = useRouter();
+const route = useRoute();
+
+const loading = ref(false);
+
+const car = ref({
+  specifications: {},
+  features: [],
+});
 
 const goBack = () => {
-  router.push("/admin/katalog");
+  router.back();
+};
+
+const fetchCarDetail = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      `http://localhost:8000/api/v1/cars/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    car.value = res.data.data;
+
+    console.log(car.value);
+
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchCarDetail();
+});
+
+const formatPrice = (price) => {
+  return new Intl.NumberFormat("id-ID").format(price);
+};
+
+const formatDate = (date) => {
+  if (!date) return "-";
+
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 };
 </script>
 

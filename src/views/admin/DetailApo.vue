@@ -11,22 +11,20 @@
     <!-- CONTENT -->
     <div class="container">
       <!-- IMAGE -->
-      <img src="/src/assets/civic.png" class="banner-image" />
+      <img :src="appointment.car?.thumbnail" class="banner-image" />
 
       <!-- CARD -->
       <div class="card">
         <!-- NAMA -->
-        <div class="field">
-          <label>Nama Pelanggan</label>
-
-          <div class="input-box">namakau</div>
-        </div>
-
+         <div class="field">
+            <label>Nama Pelanggan</label>
+            <div class="input-box">{{ appointment.user?.username }}</div>
+         </div>
         <!-- MOBIL -->
         <div class="field">
           <label>Nama Kendaraan</label>
 
-          <div class="input-box">Honda Civic Type R</div>
+          <div class="input-box">{{appointment?.car?.brand}} {{ appointment?.car?.model }}</div>
         </div>
 
         <!-- APPOINTMENT -->
@@ -40,22 +38,22 @@
           <div class="info-box">
             <div class="info-item">
               <img src="/src/assets/admin/icon-calendar2.svg" />
-              <span>10 April 2026</span>
+              <span>{{ formatDate(appointment?.slot?.date) }}</span>
             </div>
 
             <div class="info-item">
               <img src="/src/assets/icon-jam.svg" />
-              <span>16:00 WIB</span>
+              <span>{{ appointment?.slot?.time }}</span>
             </div>
 
             <div class="info-item">
               <img src="/src/assets/icon-callungu.png" />
-              <span>0812345678</span>
+              <span>{{appointment?.phone}}</span>
             </div>
 
             <div class="info-item">
               <img src="/src/assets/icon-msghijau.png" />
-              <span>namku@gmail</span>
+              <span>{{ appointment?.email }}</span>
             </div>
           </div>
         </div>
@@ -63,8 +61,26 @@
         <!-- LOKASI -->
         <div class="field">
           <label>Lokasi Appointment</label>
-
-          <div class="input-box">Rumah abang</div>
+            <div class="location-box">
+              <div class="location-header">
+                <img src="/src/assets/admin/icon-location.svg" class="location-icon" />
+                <div>
+                  <h4>
+                    {{ appointment?.slot?.location?.location_name }}
+                  </h4>
+                  <p>
+                    {{ appointment?.slot?.location?.address }}
+                  </p>
+                </div>
+              </div>
+              <a
+                :href="appointment?.slot?.location?.map_link"
+                target="_blank"
+                class="map-link"
+              >
+                Lihat Lokasi di Google Maps
+              </a>
+            </div>        
         </div>
 
         <!-- PESAN -->
@@ -72,7 +88,7 @@
           <label>Pesan (Opsional)</label>
 
           <div class="textarea-box">
-            request lokasi appointmentnya di kantor...bole?
+            {{appointment?.notes}}
           </div>
         </div>
 
@@ -88,8 +104,8 @@
 
           <button
             class="status-btn reject"
-            :class="{ activeReject: selectedStatus === 'rejected' }"
-            @click="selectedStatus = 'rejected'"
+            :class="{ activeReject: selectedStatus === 'cancelled' }"
+            @click="selectedStatus = 'cancelled'"
           >
             Tolak
           </button>
@@ -99,61 +115,164 @@
         <button class="update-btn" @click="updateStatus">
           Perbarui Status Appointment
         </button>
+
+        <!--DELETE-->
+        <button class="delete-btn" @click="deleteAppointment">
+          Hapus Appointment
+        </button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { ref, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
 import Swal from "sweetalert2";
 
 const router = useRouter();
-
+const route = useRoute();
+const appointment = ref({});
+const loading = ref(false);
 const selectedStatus = ref("confirmed");
+
+onMounted(() => {
+  fetchDetail();
+});
+
+/* FETCH DETAIL APPOINTMENT */
+const fetchDetail = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      `http://localhost:8000/api/v1/admin/schedules/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    appointment.value = res.data.data;
+
+    // set status awal sesuai API
+    selectedStatus.value = appointment.value.status;
+
+    console.log(appointment.value);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+/* UPDATE STATUS */
+const updateStatus = async () => {
+  try {
+    await axios.patch(
+      `http://localhost:8000/api/v1/admin/schedules/${route.params.id}/status`,
+      {
+        status: selectedStatus.value,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    Swal.fire({
+      icon: "success",
+      title: "Berhasil",
+      text: "Status appointment berhasil diperbarui",
+      showConfirmButton: false,
+      timer:1800,
+    });
+
+    setTimeout(() =>{
+      router.push("/admin/appointment");
+    },1800);
+    
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Gagal",
+      text: "Gagal memperbarui status",
+    });
+  }
+};
+
+/* DELETE STATUS */
+const deleteAppointment = async () => {
+  try {
+    const result = await Swal.fire({
+      title: "Hapus Appointment?",
+      text: "Data appointment akan dihapus permanen",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#999",
+      confirmButtonText: "Ya, Hapus",
+      cancelButtonText: "Batal",
+    });
+
+    if (!result.isConfirmed) return;
+
+    await axios.delete(
+      `http://localhost:8000/api/v1/admin/schedules/${route.params.id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    await Swal.fire({
+      icon: "success",
+      title: "Berhasil",
+      text: "Appointment berhasil dihapus",
+      showConfirmButton: false,
+      timer:1800,
+    });
+
+    setTimeout(() =>{
+      router.push("/admin/appointment");
+    },1800);
+
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      icon: "error",
+      title: "Gagal",
+      text: "Gagal menghapus appointment",
+    });
+  }
+};
 
 /* ROUTER */
 const goBack = () => {
   router.push("/admin/appointment");
 };
 
-/* ALERT */
-const updateStatus = () => {
-  Swal.fire({
-    html: `
-      <div class="success-alert">
-        <img src="/src/assets/icon-check2.svg" class="success-icon" />
-
-        <h2>Status Appointment Berhasil Diperbarui!</h2>
-
-        <button class="back-alert-btn">
-          Kembali ke Daftar Appointments
-        </button>
-      </div>
-    `,
-
-    showConfirmButton: false,
-
-    background: "#ffffff",
-
-    width: 420,
-
-    customClass: {
-      popup: "custom-popup",
-    },
+/* FORMAT */
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
+};
 
-  setTimeout(() => {
-    const btn = document.querySelector(".back-alert-btn");
-
-    if (btn) {
-      btn.addEventListener("click", async () => {
-        await Swal.close();
-        router.push("/admin/appointment");
-      });
-    }
-  }, 100);
+const formatTime = (date) => {
+  return new Date(date).toLocaleTimeString("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 </script>
 
@@ -250,6 +369,72 @@ const updateStatus = () => {
   font-size: 16px;
 
   margin-bottom: 14px;
+}
+
+/* LOCATION */
+.location-box {
+  background: #fafafa;
+
+  border: 1px solid #e2c567;
+  border-radius: 14px;
+
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.location-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.location-icon {
+  width: 22px;
+  height: 22px;
+
+  margin-top: 2px;
+}
+
+.location-header h4 {
+  font-size: 18px;
+  font-weight: 700;
+
+  color: #111;
+
+  margin-bottom: 6px;
+}
+
+.location-header p {
+  color: #666;
+  line-height: 1.6;
+
+  font-size: 15px;
+}
+
+.map-link {
+  width: fit-content;
+
+  background: #d4af37;
+  color: white;
+
+  text-decoration: none;
+
+  padding: 10px 18px;
+
+  border-radius: 10px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition: 0.2s;
+}
+
+.map-link:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
 }
 
 /* INPUT */
@@ -374,6 +559,32 @@ const updateStatus = () => {
 
 .update-btn:hover {
   transform: translateY(-2px);
+}
+
+/* DELETE */
+.delete-btn {
+  width: 100%;
+  height: 52px;
+
+  margin-top: 14px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #ff2d2d;
+
+  color: white;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.delete-btn:hover {
+  opacity: 0.9;
 }
 
 /* ALERT */

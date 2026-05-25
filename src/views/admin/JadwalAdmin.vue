@@ -28,7 +28,7 @@
             <!-- SEARCH -->
             <div class="search-box">
               <img src="/src/assets/admin/icon-search.svg" />
-              <input type="text" placeholder="Search..." />
+              <input v-model="searchQuery" type="text" placeholder="Search..." />
             </div>
           </div>
 
@@ -38,8 +38,11 @@
           </button>
         </div>
 
+        <div v-if="loading" class="loading">
+          Loading...
+        </div>
         <!-- TABLE -->
-        <div class="table-wrapper">
+        <div v-else class="table-wrapper">
           <!-- HEADER -->
           <div class="table-header">
             <div>Tanggal</div>
@@ -47,89 +50,45 @@
             <div>Lokasi</div>
             <div>Aksi</div>
           </div>
+            <div
+              class="table-row"
+              v-for="(item, index) in filteredSchedules"
+              :key="item.slot_id"
+              :class="{ white: index % 2 !== 0 }"
+            >
+              <div>{{ formatDate(item.date) }}</div>
 
-          <!-- ROW -->
-          <div class="table-row">
-            <div>18/01/2026</div>
-            <div>10:00</div>
-            <div>Rumah abang</div>
+              <div>{{ item.time }}</div>
 
-            <div class="action">
-              <img
-                src="/src/assets/admin/icon-edit.svg"
-                class="edit-icon"
-                @click="goEdit"
-              />
+              <div class="location-info">
+                <h4>{{ item.location?.location_name }}</h4>
 
-              <img
-                src="/src/assets/admin/icon-trash.svg"
-                class="trash-icon"
-                @click="goTrash"
-              />
-            </div>
-          </div>
+                <p>
+                  {{ item.location?.address }}
+                </p>
 
-          <!-- ROW -->
-          <div class="table-row white">
-            <div>02/05/2026</div>
-            <div>11:00</div>
-            <div>Rumah abang</div>
+                <a
+                  :href="item.location?.map_link"
+                  target="_blank"
+                  class="map-link"
+                >
+                  Lihat Maps
+                </a>
+              </div>
 
-            <div class="action">
-              <img
-                src="/src/assets/admin/icon-edit.svg"
-                class="edit-icon"
-                @click="goEdit"
-              />
+              <div class="action">
+                <img
+                  src="/src/assets/admin/icon-edit.svg"
+                  class="edit-icon"
+                  @click="goEdit(item)"
+                />
 
-              <img
-                src="/src/assets/admin/icon-trash.svg"
-                class="trash-icon"
-                @click="goTrash"
-              />
-            </div>
-          </div>
-
-          <!-- ROW -->
-          <div class="table-row">
-            <div>02/05/2026</div>
-            <div>10:00</div>
-            <div>Kantor</div>
-
-            <div class="action">
-              <img
-                src="/src/assets/admin/icon-edit.svg"
-                class="edit-icon"
-                @click="goEdit"
-              />
-
-              <img
-                src="/src/assets/admin/icon-trash.svg"
-                class="trash-icon"
-                @click="goTrash"
-              />
-            </div>
-          </div>
-
-          <!-- ROW -->
-          <div class="table-row white">
-            <div>20/04/2026</div>
-            <div>14:00</div>
-            <div>Kantor</div>
-
-            <div class="action">
-              <img
-                src="/src/assets/admin/icon-edit.svg"
-                class="edit-icon"
-                @click="goEdit"
-              />
-
-              <img
-                src="/src/assets/admin/icon-trash.svg"
-                class="trash-icon"
-                @click="goTrash"
-              />
-            </div>
+                <img
+                  src="/src/assets/admin/icon-trash.svg"
+                  class="trash-icon"
+                  @click="deleteJadwal(item.slot_id)"
+                />
+              </div>
           </div>
         </div>
       </div>
@@ -138,28 +97,144 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
-
+import axios from "axios";
 import AdminSidebar from "@/components/AdminSidebar.vue";
 import AdminTopbar from "@/components/AdminTopbar.vue";
+import Swal from "sweetalert2";
 
 const router = useRouter();
 
 const selectedShow = ref("4");
+const schedules = ref([]);
+const loading = ref(false);
+const searchQuery = ref("");
+
+const filteredSchedules = computed(() => {
+  let filtered = schedules.value.filter((item) => {
+    const keyword = searchQuery.value.toLowerCase();
+
+    return (
+      item.location?.location_name
+        ?.toLowerCase()
+        .includes(keyword) ||
+      item.location?.address
+        ?.toLowerCase()
+        .includes(keyword) ||
+      item.time?.toLowerCase()
+        .includes(keyword)
+    );
+  });
+
+  return filtered.slice(0, Number(selectedShow.value));
+});
+
+onMounted(() => {
+  fetchSchedules();
+});
+
+const fetchSchedules = async () => {
+  try {
+    loading.value = true;
+
+    const res = await axios.get(
+      "http://localhost:8000/api/v1/schedules/available",
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    schedules.value = res.data.data;
+
+    console.log(schedules.value);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    loading.value = false;
+  }
+};
+
+const deleteJadwal = async (id) => {
+  const result = await Swal.fire({
+    title: "Anda yakin ingin menghapus jadwal?",
+    background: "#fff",
+    confirmButtonText: "Ya, Hapus",
+    showCancelButton: true,
+    cancelButtonText: "Batal",
+    reverseButtons: true,
+
+    customClass: {
+      popup: "custom-popup",
+      title: "custom-title",
+      confirmButton: "red-btn",
+      cancelButton: "green-btn",
+    },
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    await axios.delete(
+      `http://localhost:8000/api/v1/admin/available-slots/${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      }
+    );
+
+    await Swal.fire({
+      title: "Berhasil",
+      text: "Jadwal berhasil dihapus",
+      icon: "success",
+      showConfirmButton: false,
+      timer: 1800,
+    });
+
+    // refresh data
+    fetchSchedules();
+
+  } catch (err) {
+    console.error(err);
+
+    Swal.fire({
+      title: "Gagal",
+      text: "Gagal menghapus jadwal",
+      icon: "error",
+      confirmButtonColor: "#ff1e1e",
+    });
+  }
+};
+
+const formatDate = (date) => {
+  return new Date(date).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+};
 
 /* ROUTER */
 const goTambahJadwal = () => {
   router.push("/admin/tambahjadwal");
 };
 
-const goEdit = () => {
-  router.push("/admin/editjadwal");
-};
-
-const goTrash = () => {
-  router.push("/admin/deletejadwal");
-};
+const goEdit = (item) => {
+  router.push({
+    path: `/admin/editjadwal/${item.slot_id}`,
+    query: {
+      date: item.date,
+      time: item.time,
+      location_id: item.location?.id,
+      location_name: item.location?.location_name,
+      address: item.location?.address,
+      map_link: item.location?.map_link,
+    },
+  });
+};                
 </script>
 
 <style scoped>
@@ -200,17 +275,13 @@ const goTrash = () => {
 
 /* SELECT */
 .filter-left select {
-  width: 42px;
+  width: 55px;
   height: 34px;
-
   border: 1px solid #ddd;
   border-radius: 8px;
-
   padding-left: 10px;
-
   background: white;
   cursor: pointer;
-
   outline: none;
 }
 
@@ -307,6 +378,43 @@ const goTrash = () => {
 }
 .table-row:last-child {
   border-bottom: none;
+}
+
+/* LOCATION */
+.location-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.location-info h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+}
+
+.location-info p {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.map-link {
+  width: fit-content;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  color: #d4af37;
+
+  text-decoration: none;
+
+  transition: 0.2s;
+}
+
+.map-link:hover {
+  text-decoration: underline;
+  opacity: 0.8;
 }
 
 /* ACTION */

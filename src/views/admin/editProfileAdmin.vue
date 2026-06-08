@@ -113,7 +113,7 @@ const fetchProfile = async () => {
   try {
     const token = localStorage.getItem("token"); // pastikan ada
 
-    const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+    const response = await fetch("https://backend-autocatalog.vercel.app/api/v1/auth/me", {
       headers: {
         "Authorization": `Bearer ${token}`,
         "Content-Type": "application/json"
@@ -135,7 +135,7 @@ const updateProfile = async () => {
   try {
     const token = localStorage.getItem("token");
 
-    const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+    const response = await fetch("https://backend-autocatalog.vercel.app/api/v1/auth/me", {
       method: "PUT",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -205,7 +205,7 @@ const updatePassword = async () => {
       return;
     }
 
-    const response = await fetch("http://localhost:8000/api/v1/auth/change-password", {
+    const response = await fetch("https://backend-autocatalog.vercel.app/api/v1/auth/change-password", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,

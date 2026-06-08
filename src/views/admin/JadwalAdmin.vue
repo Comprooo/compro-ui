@@ -139,7 +139,7 @@ const fetchSchedules = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      "http://localhost:8000/api/v1/schedules/available",
+      "https://backend-autocatalog.vercel.app/api/v1/schedules/available",
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -178,7 +178,7 @@ const deleteJadwal = async (id) => {
 
   try {
     await axios.delete(
-      `http://localhost:8000/api/v1/admin/available-slots/${id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/admin/available-slots/${id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

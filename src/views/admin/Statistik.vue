@@ -108,7 +108,7 @@ const fetchStats = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      "http://localhost:8000/api/v1/admin/stats",
+      "https://backend-autocatalog.vercel.app/api/v1/admin/stats",
       {
         params: {
           filter: selectedFilter.value,

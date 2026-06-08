@@ -41,7 +41,7 @@ const handleImageUpload = async (event) => {
     formData.append("file", file);
 
     const res = await axios.post(
-      "http://localhost:8000/api/v1/upload/image",
+      "https://backend-autocatalog.vercel.app/api/v1/upload/image",
       formData,
       {
         headers: {
@@ -103,7 +103,7 @@ const fetchCarDetail = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      `http://localhost:8000/api/v1/cars/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/cars/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -195,7 +195,7 @@ const updateCatalog = async () => {
 
   try {
     await axios.put(
-      `http://localhost:8000/api/v1/admin/cars/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/admin/cars/${route.params.id}`,
       {
         brand: form.value.brand,
         model: form.value.model,
@@ -285,7 +285,7 @@ const deleteCatalog = async () => {
 
   try {
     await axios.delete(
-      `http://localhost:8000/api/v1/admin/cars/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/admin/cars/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

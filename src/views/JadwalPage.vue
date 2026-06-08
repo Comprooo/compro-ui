@@ -144,7 +144,7 @@ const fetchCar = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      `http://localhost:8000/api/v1/cars/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/cars/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -165,7 +165,7 @@ const fetchSlots = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      `http://localhost:8000/api/v1/schedules/available`,
+      `https://backend-autocatalog.vercel.app/api/v1/schedules/available`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -295,7 +295,7 @@ const submitForm = async () => {
     console.log(payload);
 
     const res = await axios.post(
-      "http://localhost:8000/api/v1/schedules",
+      "https://backend-autocatalog.vercel.app/api/v1/schedules",
       payload,
       {
         headers: {

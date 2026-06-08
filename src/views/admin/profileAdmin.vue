@@ -94,7 +94,7 @@ const profile = ref({
 
 const fetchProfile = async () => {
   try {
-    const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+    const response = await fetch("https://backend-autocatalog.vercel.app/api/v1/auth/me", {
       headers: {
         "Authorization": `Bearer ${localStorage.getItem("token")}`,
         "Content-Type": "application/json"
@@ -141,7 +141,7 @@ const handleLogout = async () => {
   try {
     const token = localStorage.getItem("token");
 
-    await fetch("http://localhost:8000/api/v1/auth/logout", {
+    await fetch("https://backend-autocatalog.vercel.app/api/v1/auth/logout", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

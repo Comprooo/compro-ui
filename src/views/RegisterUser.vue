@@ -121,7 +121,7 @@ const handleRegister = async () => {
 
 const fetchRegister = async () => {
   try {
-    const response = await axios.post('http://localhost:8000/api/v1/auth/register', {
+    const response = await axios.post('https://backend-autocatalog.vercel.app/api/v1/auth/register', {
       username: name.value,
       email: email.value,
       phone: phone.value,

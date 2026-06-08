@@ -240,7 +240,7 @@ const sendMessage = async (customMessage = null) => {
     }
 
     const response = await axios.post(
-      "http://localhost:8000/api/v1/chat",
+      "https://backend-autocatalog.vercel.app/api/v1/chat",
       payload,
       {
         headers: {

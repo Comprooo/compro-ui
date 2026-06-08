@@ -110,7 +110,7 @@ const handleRegister = () => {
 
 const fetchLogin = async () => {
   try {
-    const response = await axios.post('http://localhost:8000/api/v1/auth/login', {
+    const response = await axios.post('https://backend-autocatalog.vercel.app/api/v1/auth/login', {
       username: name.value,
       password: password.value
     });

@@ -65,7 +65,7 @@ const fetchSchedule = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      `http://localhost:8000/api/v1/schedules/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/schedules/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

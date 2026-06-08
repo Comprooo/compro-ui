@@ -162,7 +162,7 @@ const fetchAppointment = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      `http://localhost:8000/api/v1/schedules/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/schedules/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -187,7 +187,7 @@ const fetchAppointment = async () => {
 const fetchSlots = async () => {
   try {
     const res = await axios.get(
-      "http://localhost:8000/api/v1/schedules/available",
+      "https://backend-autocatalog.vercel.app/api/v1/schedules/available",
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -285,7 +285,7 @@ const submitReschedule = async () => {
     console.log(payload);
 
     const res  = await axios.patch(
-      `http://localhost:8000/api/v1/schedules/${route.params.id}/reschedule`,
+      `https://backend-autocatalog.vercel.app/api/v1/schedules/${route.params.id}/reschedule`,
       payload,
       {
         headers: {

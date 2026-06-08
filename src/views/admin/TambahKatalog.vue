@@ -37,7 +37,7 @@ const handleUpload = async (event) => {
     formData.append("file", file);
 
     const res = await axios.post(
-      "http://localhost:8000/api/v1/upload/image",
+      "https://backend-autocatalog.vercel.app/api/v1/upload/image",
       formData,
       {
         headers: {
@@ -125,7 +125,7 @@ const goUpload = async () => {
 
   try {
     await axios.post(
-      "http://localhost:8000/api/v1/admin/cars",
+      "https://backend-autocatalog.vercel.app/api/v1/admin/cars",
       {
         brand: form.value.brand,
         model: form.value.model,

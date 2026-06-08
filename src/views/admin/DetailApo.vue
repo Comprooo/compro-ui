@@ -147,7 +147,7 @@ const fetchDetail = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      `http://localhost:8000/api/v1/admin/schedules/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/admin/schedules/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -172,7 +172,7 @@ const fetchDetail = async () => {
 const updateStatus = async () => {
   try {
     await axios.patch(
-      `http://localhost:8000/api/v1/admin/schedules/${route.params.id}/status`,
+      `https://backend-autocatalog.vercel.app/api/v1/admin/schedules/${route.params.id}/status`,
       {
         status: selectedStatus.value,
       },
@@ -223,7 +223,7 @@ const deleteAppointment = async () => {
     if (!result.isConfirmed) return;
 
     await axios.delete(
-      `http://localhost:8000/api/v1/admin/schedules/${route.params.id}`,
+      `https://backend-autocatalog.vercel.app/api/v1/admin/schedules/${route.params.id}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,

@@ -284,7 +284,7 @@ const submitJadwal = async () => {
     // multiple request
     const requests = schedules.value.map((schedule) => {
       return axios.post(
-        "http://localhost:8000/api/v1/admin/available-slots",
+        "https://backend-autocatalog.vercel.app/api/v1/admin/available-slots",
         {
           location_id: locationId.value,
           date: formattedDate,
@@ -325,7 +325,7 @@ const submitJadwal = async () => {
 const createLocation = async () => {
   try {
     const res = await axios.post(
-      "http://localhost:8000/api/v1/admin/locations",
+      "https://backend-autocatalog.vercel.app/api/v1/admin/locations",
       {
         location_name: locationName.value,
         address: address.value,

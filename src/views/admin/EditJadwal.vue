@@ -242,7 +242,7 @@ const updateJadwal = async () => {
     }
 
     await axios.patch(
-      `http://localhost:8000/api/v1/admin/available-slots/${slotId}`,
+      `https://backend-autocatalog.vercel.app/api/v1/admin/available-slots/${slotId}`,
       {
         location_id: String(locationId.value),
         date: formattedDate,

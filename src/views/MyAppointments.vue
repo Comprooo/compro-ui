@@ -248,7 +248,7 @@ const fetchAppointments = async () => {
     loading.value = true;
 
     const res = await axios.get(
-      "http://localhost:8000/api/v1/schedules/me",
+      "https://backend-autocatalog.vercel.app/api/v1/schedules/me",
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -313,7 +313,7 @@ const cancelAppointment = async (id) => {
     loading.value = true;
 
     const res = await axios.patch(
-      `http://localhost:8000/api/v1/schedules/${id}/cancel`,
+      `https://backend-autocatalog.vercel.app/api/v1/schedules/${id}/cancel`,
       {},
       {
         headers: {

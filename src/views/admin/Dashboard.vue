@@ -171,7 +171,7 @@ const fetchCars = async () => {
   try {
     loading.value = true;
 
-    const res = await axios.get("http://localhost:8000/api/v1/cars", {
+    const res = await axios.get("https://backend-autocatalog.vercel.app/api/v1/cars", {
       params: {
         page: 1,
         limit: 100,

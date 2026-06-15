@@ -38,11 +38,6 @@
             </div>
           </div>
 
-          <!-- Forgot -->
-          <div class="forgot">
-            <a href="#" @click.prevent="forgotPassword">Lupa password?</a>
-          </div>
-
           <!-- Button -->
           <button type="submit" class="login-btn">Login</button>
         </form>
@@ -96,13 +91,6 @@ if (!name.value || !password.value) {
 }
   await fetchLogin();
 };
-
-const forgotPassword = () => {
-Swal.fire({
-    icon: "warning",
-    title: "Fitur Belum Tersedia",
-    confirmButtonColor: "#caa63a",
-  });};
 
 const handleRegister = () => {
   router.push("/register");
